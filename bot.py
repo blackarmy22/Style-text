@@ -1,5 +1,26 @@
 # =========================================================
 # ENGLISH STYLE FONT BOT
+#
+# FEATURES
+# - English text styling
+# - Clean Unicode styles
+# - Screenshot-style styles
+# - Style name displayed on each button
+# - Button name itself is rendered in its own style
+# - 3 buttons per row
+# - Clicking a style edits the SAME bot message
+# - No new message when changing styles
+# - Bot message contains ONLY the user's text
+# - No style name inside the result message
+# - Spaces, numbers and punctuation are preserved
+#
+# REMOVED
+# - Overlapping Circles
+# - Sans Bold Caps
+# - Strike Circle
+# =========================================================
+# =========================================================
+# IMPORTS
 # =========================================================
 import logging
 import html
@@ -8,7 +29,6 @@ import os
 import threading
 from flask import Flask
 from datetime import datetime
-
 from telegram import (
     Update,
     InlineKeyboardButton,
@@ -24,44 +44,40 @@ from telegram.ext import (
 )
 
 # =========================================================
-# FLASK WEB SERVER (RENDER)
+# RENDER / FLASK WEB SERVER
 # =========================================================
 app = Flask(__name__)
 
-
-@app.route("/")
+@app.get("/")
 def home():
-    return "English Style Font Bot is running!", 200
+    return "English Style Font Bot is running", 200
 
-
-@app.route("/health")
+@app.get("/health")
 def health():
-    return {"status": "ok"}, 200
-
+    return "OK", 200
 
 def run_web_server():
     port = int(os.environ.get("PORT", "10000"))
     app.run(host="0.0.0.0", port=port, use_reloader=False)
 
-
 # =========================================================
-# BOT TOKEN (READ FROM ENVIRONMENT VARIABLE)
-# On Render: Environment -> add  BOT_TOKEN = your token
+# BOT TOKEN
 # =========================================================
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
+BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"
 
 # =========================================================
 # FORCE JOIN CHANNEL
 # =========================================================
-CHANNEL_ID = "@technology_kurdishB"
-CHANNEL_LINK = "https://t.me/technology_kurdishB"
+CHANNEL_ID = "@fontstylem"
+CHANNEL_LINK = "https://t.me/fontstylem"
 
 # =========================================================
 # USER TRACKING / ADMIN
 # =========================================================
-ADMIN_IDS = {8728499382}
+# Put your Telegram numeric User ID here.
+# Example: ADMIN_IDS = {123456789}
+ADMIN_IDS = {123456789}
 USERS_DB = "users.db"
-
 # =========================================================
 # LOGGING
 # =========================================================
@@ -70,7 +86,6 @@ logging.basicConfig(
     level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
-
 # =========================================================
 # STANDARD CHARACTERS
 # =========================================================
@@ -78,10 +93,9 @@ UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 LOWER = "abcdefghijklmnopqrstuvwxyz"
 DIGITS = "0123456789"
 STD_A = UPPER + LOWER + DIGITS
-
-
 # =========================================================
-# HELPER: CREATE UNICODE MATHEMATICAL ALPHABET
+# HELPER
+# CREATE UNICODE MATHEMATICAL ALPHABET
 # =========================================================
 def make_math_map(
     upper_start=None,
@@ -89,69 +103,97 @@ def make_math_map(
     digit_start=None,
     exceptions=None,
 ):
+    """
+    Creates A-Z / a-z / 0-9 Unicode mapping.
+    """
     mapping = {}
     if upper_start is not None:
         for i, char in enumerate(UPPER):
-            mapping[char] = chr(upper_start + i)
+            mapping[char] = chr(
+                upper_start + i
+            )
     if lower_start is not None:
         for i, char in enumerate(LOWER):
-            mapping[char] = chr(lower_start + i)
+            mapping[char] = chr(
+                lower_start + i
+            )
     if digit_start is not None:
         for i, char in enumerate(DIGITS):
-            mapping[char] = chr(digit_start + i)
+            mapping[char] = chr(
+                digit_start + i
+            )
     if exceptions:
         mapping.update(exceptions)
     return mapping
-
-
 # =========================================================
 # UNICODE FONT MAPS
 # =========================================================
+# ---------------------------------------------------------
+# BOLD SERIF
+# ---------------------------------------------------------
 BOLD_SERIF_MAP = make_math_map(
     upper_start=0x1D400,
     lower_start=0x1D41A,
     digit_start=0x1D7CE,
 )
-
+# ---------------------------------------------------------
+# ITALIC SERIF
+# ---------------------------------------------------------
 ITALIC_SERIF_MAP = make_math_map(
     upper_start=0x1D434,
     lower_start=0x1D44E,
-    exceptions={"h": "ℎ"},
+    exceptions={
+        "h": "ℎ",
+    },
 )
-
+# ---------------------------------------------------------
+# BOLD ITALIC
+# ---------------------------------------------------------
 BOLD_ITALIC_MAP = make_math_map(
     upper_start=0x1D468,
     lower_start=0x1D482,
 )
-
+# ---------------------------------------------------------
+# SANS
+# ---------------------------------------------------------
 SANS_MAP = make_math_map(
     upper_start=0x1D5A0,
     lower_start=0x1D5BA,
     digit_start=0x1D7E2,
 )
-
+# ---------------------------------------------------------
+# SANS BOLD
+# ---------------------------------------------------------
 SANS_BOLD_MAP = make_math_map(
     upper_start=0x1D5D4,
     lower_start=0x1D5EE,
     digit_start=0x1D7EC,
 )
-
+# ---------------------------------------------------------
+# SANS ITALIC
+# ---------------------------------------------------------
 SANS_ITALIC_MAP = make_math_map(
     upper_start=0x1D608,
     lower_start=0x1D622,
 )
-
+# ---------------------------------------------------------
+# SANS BOLD ITALIC
+# ---------------------------------------------------------
 SANS_BOLD_ITALIC_MAP = make_math_map(
     upper_start=0x1D63C,
     lower_start=0x1D656,
 )
-
+# ---------------------------------------------------------
+# MONOSPACE
+# ---------------------------------------------------------
 MONOSPACE_MAP = make_math_map(
     upper_start=0x1D670,
     lower_start=0x1D68A,
     digit_start=0x1D7F6,
 )
-
+# ---------------------------------------------------------
+# DOUBLE STRUCK
+# ---------------------------------------------------------
 DOUBLE_STRUCK_MAP = make_math_map(
     upper_start=0x1D538,
     lower_start=0x1D552,
@@ -164,12 +206,11 @@ DOUBLE_STRUCK_MAP = make_math_map(
         "Q": "ℚ",
         "R": "ℝ",
         "Z": "ℤ",
-        "e": "ℯ",
-        "i": "𝕚",
-        "j": "𝕛",
     },
 )
-
+# ---------------------------------------------------------
+# FRAKTUR / GOTHIC
+# ---------------------------------------------------------
 FRAKTUR_MAP = make_math_map(
     upper_start=0x1D504,
     lower_start=0x1D51E,
@@ -181,18 +222,21 @@ FRAKTUR_MAP = make_math_map(
         "Z": "ℨ",
     },
 )
-
+# ---------------------------------------------------------
+# BOLD FRAKTUR
+# ---------------------------------------------------------
 BOLD_FRAKTUR_MAP = make_math_map(
     upper_start=0x1D56C,
     lower_start=0x1D586,
 )
-
+# ---------------------------------------------------------
+# SCRIPT
+# ---------------------------------------------------------
 SCRIPT_MAP = make_math_map(
     upper_start=0x1D49C,
     lower_start=0x1D4B6,
     exceptions={
         "B": "ℬ",
-        "C": "ℭ",
         "E": "ℰ",
         "F": "ℱ",
         "H": "ℋ",
@@ -200,34 +244,49 @@ SCRIPT_MAP = make_math_map(
         "L": "ℒ",
         "M": "ℳ",
         "R": "ℛ",
-        "Z": "ℤ",
         "e": "ℯ",
         "g": "ℊ",
         "o": "ℴ",
     },
 )
-
+# ---------------------------------------------------------
+# BOLD SCRIPT
+# ---------------------------------------------------------
 BOLD_SCRIPT_MAP = make_math_map(
     upper_start=0x1D4D0,
     lower_start=0x1D4EA,
 )
-
+# ---------------------------------------------------------
+# FULLWIDTH
+# ---------------------------------------------------------
 FULLWIDTH_MAP = {}
-for _i, _c in enumerate(UPPER):
-    FULLWIDTH_MAP[_c] = chr(0xFF21 + _i)
-for _i, _c in enumerate(LOWER):
-    FULLWIDTH_MAP[_c] = chr(0xFF41 + _i)
-for _i, _c in enumerate(DIGITS):
-    FULLWIDTH_MAP[_c] = chr(0xFF10 + _i)
-
-
+for i, char in enumerate(UPPER):
+    FULLWIDTH_MAP[char] = chr(
+        0xFF21 + i
+    )
+for i, char in enumerate(LOWER):
+    FULLWIDTH_MAP[char] = chr(
+        0xFF41 + i
+    )
+for i, char in enumerate(DIGITS):
+    FULLWIDTH_MAP[char] = chr(
+        0xFF10 + i
+    )
 # =========================================================
 # BASIC MAP CONVERTER
 # =========================================================
 def apply_map(text, mapping):
-    return "".join(mapping.get(char, char) for char in text)
-
-
+    """
+    Applies character mapping while preserving:
+    - spaces
+    - punctuation
+    - line breaks
+    - unsupported characters
+    """
+    return "".join(
+        mapping.get(char, char)
+        for char in text
+    )
 # =========================================================
 # SMALL CAPS
 # =========================================================
@@ -237,7 +296,7 @@ SMALL_CAPS_MAP = {
     "c": "ᴄ",
     "d": "ᴅ",
     "e": "ᴇ",
-    "f": "ꜰ",
+    "f": "(cid:0)",
     "g": "ɢ",
     "h": "ʜ",
     "i": "ɪ",
@@ -259,14 +318,14 @@ SMALL_CAPS_MAP = {
     "y": "ʏ",
     "z": "ᴢ",
 }
-
-
 def small_caps(text):
     return "".join(
-        SMALL_CAPS_MAP.get(char.lower(), char) for char in text
+        SMALL_CAPS_MAP.get(
+            char.lower(),
+            char
+        )
+        for char in text
     )
-
-
 # =========================================================
 # CIRCLED
 # =========================================================
@@ -280,23 +339,33 @@ CIRCLED_LOWER = (
     "ⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣ"
     "ⓤⓥⓦⓧⓨⓩ"
 )
-CIRCLED_DIGITS = "⓪①②③④⑤⑥⑦⑧⑨"
-
-
+CIRCLED_DIGITS = (
+    "⓪①②③④⑤⑥⑦⑧⑨"
+)
 def circled(text):
     result = []
     for char in text:
         if char in UPPER:
-            result.append(CIRCLED_UPPER[UPPER.index(char)])
+            result.append(
+                CIRCLED_UPPER[
+                    UPPER.index(char)
+                ]
+            )
         elif char in LOWER:
-            result.append(CIRCLED_LOWER[LOWER.index(char)])
+            result.append(
+                CIRCLED_LOWER[
+                    LOWER.index(char)
+                ]
+            )
         elif char in DIGITS:
-            result.append(CIRCLED_DIGITS[DIGITS.index(char)])
+            result.append(
+                CIRCLED_DIGITS[
+                    DIGITS.index(char)
+                ]
+            )
         else:
             result.append(char)
     return "".join(result)
-
-
 # =========================================================
 # FILLED CIRCLED
 # =========================================================
@@ -305,18 +374,19 @@ NEGATIVE_CIRCLED_UPPER = (
     "🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣"
     "🅤🅥🅦🅧🅨🅩"
 )
-
-
 def filled_circled(text):
     result = []
     for char in text:
         if char.upper() in UPPER:
-            result.append(NEGATIVE_CIRCLED_UPPER[UPPER.index(char.upper())])
+            index = UPPER.index(
+                char.upper()
+            )
+            result.append(
+                NEGATIVE_CIRCLED_UPPER[index]
+            )
         else:
             result.append(char)
     return "".join(result)
-
-
 # =========================================================
 # SQUARES
 # =========================================================
@@ -325,18 +395,24 @@ SQUARED_UPPER = (
     "🄺🄻🄼🄽🄾🄿🅀🅁🅂🅃"
     "🅄🅅🅆🅇🅈🅉"
 )
-
-
 def squares(text):
     result = []
     for char in text:
-        if char.isalpha() and char.upper() in UPPER:
-            result.append(SQUARED_UPPER[UPPER.index(char.upper())])
+        if char.isalpha():
+            upper_char = char.upper()
+            if upper_char in UPPER:
+                result.append(
+                    SQUARED_UPPER[
+                        UPPER.index(
+                            upper_char
+                        )
+                    ]
+                )
+            else:
+                result.append(char)
         else:
             result.append(char)
     return "".join(result)
-
-
 # =========================================================
 # FILLED SQUARES
 # =========================================================
@@ -345,62 +421,138 @@ NEGATIVE_SQUARED_UPPER = (
     "🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃"
     "🆄🆅🆆🆇🆈🆉"
 )
-
-
 def filled_squares(text):
     result = []
     for char in text:
-        if char.isalpha() and char.upper() in UPPER:
-            result.append(NEGATIVE_SQUARED_UPPER[UPPER.index(char.upper())])
+        if char.isalpha():
+            upper_char = char.upper()
+            if upper_char in UPPER:
+                result.append(
+                    NEGATIVE_SQUARED_UPPER[
+                        UPPER.index(
+                            upper_char
+                        )
+                    ]
+                )
+            else:
+                result.append(char)
         else:
             result.append(char)
     return "".join(result)
-
-
 # =========================================================
 # PARENTHESIZED
 # =========================================================
 PARENTHESIZED_MAP = {
-    "a": "⒜", "b": "⒝", "c": "⒞", "d": "⒟", "e": "⒠",
-    "f": "⒡", "g": "⒢", "h": "⒣", "i": "⒤", "j": "⒥",
-    "k": "⒦", "l": "⒧", "m": "⒨", "n": "⒩", "o": "⒪",
-    "p": "⒫", "q": "⒬", "r": "⒭", "s": "⒮", "t": "⒯",
-    "u": "⒰", "v": "⒱", "w": "⒲", "x": "⒳", "y": "⒴",
+    "a": "⒜",
+    "b": "⒝",
+    "c": "⒞",
+    "d": "⒟",
+    "e": "⒠",
+    "f": "⒡",
+    "g": "⒢",
+    "h": "⒣",
+    "i": "⒤",
+    "j": "⒥",
+    "k": "⒦",
+    "l": "⒧",
+    "m": "⒨",
+    "n": "⒩",
+    "o": "⒪",
+    "p": "⒫",
+    "q": "⒬",
+    "r": "⒭",
+    "s": "⒮",
+    "t": "⒯",
+    "u": "⒰",
+    "v": "⒱",
+    "w": "⒲",
+    "x": "⒳",
+    "y": "⒴",
     "z": "⒵",
 }
-
-
 def parenthesized(text):
     return "".join(
-        PARENTHESIZED_MAP.get(char.lower(), char) for char in text
+        PARENTHESIZED_MAP.get(
+            char.lower(),
+            char
+        )
+        for char in text
     )
-
-
 # =========================================================
 # TINY
 # =========================================================
 TINY_MAP = {
-    "a": "ᵃ", "b": "ᵇ", "c": "ᶜ", "d": "ᵈ", "e": "ᵉ",
-    "f": "ᶠ", "g": "ᵍ", "h": "ʰ", "i": "ⁱ", "j": "ʲ",
-    "k": "ᵏ", "l": "ˡ", "m": "ᵐ", "n": "ⁿ", "o": "ᵒ",
-    "p": "ᵖ", "q": "q", "r": "ʳ", "s": "ˢ", "t": "ᵗ",
-    "u": "ᵘ", "v": "ᵛ", "w": "ʷ", "x": "ˣ", "y": "ʸ",
+    "a": "ᵃ",
+    "b": "ᵇ",
+    "c": "ᶜ",
+    "d": "ᵈ",
+    "e": "ᵉ",
+    "f": "ᶠ",
+    "g": "ᵍ",
+    "h": "ʰ",
+    "i": "ⁱ",
+    "j": "ʲ",
+    "k": "ᵏ",
+    "l": "ˡ",
+    "m": "ᵐ",
+    "n": "ⁿ",
+    "o": "ᵒ",
+    "p": "ᵖ",
+    "q": "q",
+    "r": "ʳ",
+    "s": "ˢ",
+    "t": "ᵗ",
+    "u": "ᵘ",
+    "v": "ᵛ",
+    "w": "ʷ",
+    "x": "ˣ",
+    "y": "ʸ",
     "z": "ᶻ",
-    "A": "ᴬ", "B": "ᴮ", "C": "ᶜ", "D": "ᴰ", "E": "ᴱ",
-    "F": "ᶠ", "G": "ᴳ", "H": "ᴴ", "I": "ᴵ", "J": "ᴶ",
-    "K": "ᴷ", "L": "ᴸ", "M": "ᴹ", "N": "ᴺ", "O": "ᴼ",
-    "P": "ᴾ", "Q": "Q", "R": "ᴿ", "S": "ˢ", "T": "ᵀ",
-    "U": "ᵁ", "V": "ⱽ", "W": "ᵂ", "X": "ˣ", "Y": "ʸ",
+    "A": "ᴬ",
+    "B": "ᴮ",
+    "C": "ᶜ",
+    "D": "ᴰ",
+    "E": "ᴱ",
+    "F": "ᶠ",
+    "G": "ᴳ",
+    "H": "ᴴ",
+    "I": "ᴵ",
+    "J": "ᴶ",
+    "K": "ᴷ",
+    "L": "ᴸ",
+    "M": "ᴹ",
+    "N": "ᴺ",
+    "O": "ᴼ",
+    "P": "ᴾ",
+    "Q": "Q",
+    "R": "ᴿ",
+    "S": "ˢ",
+    "T": "ᵀ",
+    "U": "ᵁ",
+    "V": "(cid:0)",
+    "W": "ᵂ",
+    "X": "ˣ",
+    "Y": "ʸ",
     "Z": "ᶻ",
-    "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴",
-    "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹",
+    "0": "⁰",
+    "1": "¹",
+    "2": "²",
+    "3": "³",
+    "4": "⁴",
+    "5": "⁵",
+    "6": "⁶",
+    "7": "⁷",
+    "8": "⁸",
+    "9": "⁹",
 }
-
-
 def tiny(text):
-    return apply_map(text, TINY_MAP)
-
-
+    return "".join(
+        TINY_MAP.get(
+            char,
+            char
+        )
+        for char in text
+    )
 # =========================================================
 # COMIC
 # =========================================================
@@ -432,12 +584,11 @@ COMIC_MAP = {
     "Y": "Ƴ", "y": "ɏ",
     "Z": "Ƶ", "z": "ƶ",
 }
-
-
 def comic(text):
-    return apply_map(text, COMIC_MAP)
-
-
+    return apply_map(
+        text,
+        COMIC_MAP
+    )
 # =========================================================
 # QUNI
 # =========================================================
@@ -454,7 +605,7 @@ QUNI_MAP = {
     "J": "Ɉ", "j": "ɉ",
     "K": "Ƙ", "k": "ƙ",
     "L": "Ł", "l": "ł",
-    "M": "Ɱ", "m": "ɱ",
+    "M": "(cid:0)", "m": "ɱ",
     "N": "Ŋ", "n": "ŋ",
     "O": "Ø", "o": "ø",
     "P": "Ƥ", "p": "ƥ",
@@ -469,297 +620,862 @@ QUNI_MAP = {
     "Y": "Ɏ", "y": "ɏ",
     "Z": "Ƶ", "z": "ƶ",
 }
-
-
 def quni(text):
-    return apply_map(text, QUNI_MAP)
-
-
+    return apply_map(
+        text,
+        QUNI_MAP
+    )
 # =========================================================
 # SPECIAL
 # =========================================================
 SPECIAL_MAP = {
-    "A": "Λ", "B": "β", "C": "C", "D": "ᗪ", "E": "Σ",
-    "F": "Ғ", "G": "Ɠ", "H": "卄", "I": "I", "J": "Ј",
-    "K": "Ҡ", "L": "Ł", "M": "爪", "N": "И", "O": "Ө",
-    "P": "尸", "Q": "Q", "R": "尺", "S": "Ѕ", "T": "Ŧ",
-    "U": "Ц", "V": "Ѵ", "W": "Ш", "X": "Ж", "Y": "Ұ",
+    "A": "Λ",
+    "B": "β",
+    "C": "C",
+    "D": "ᗪ",
+    "E": "Σ",
+    "F": "Ғ",
+    "G": "Ɠ",
+    "H": "卄",
+    "I": "I",
+    "J": "Ј",
+    "K": "Ҡ",
+    "L": "Ł",
+    "M": "爪",
+    "N": "И",
+    "O": "Ө",
+    "P": "尸",
+    "Q": "Q",
+    "R": "尺",
+    "S": "Ѕ",
+    "T": "Ŧ",
+    "U": "Ц",
+    "V": "Ѵ",
+    "W": "Ш",
+    "X": "Ж",
+    "Y": "Ұ",
     "Z": "乙",
-    "a": "α", "b": "в", "c": "¢", "d": "∂", "e": "є",
-    "f": "ƒ", "g": "ɠ", "h": "н", "i": "ι", "j": "נ",
-    "k": "к", "l": "ℓ", "m": "м", "n": "η", "o": "σ",
-    "p": "ρ", "q": "զ", "r": "я", "s": "ѕ", "t": "т",
-    "u": "υ", "v": "ν", "w": "ω", "x": "χ", "y": "у",
+    "a": "α",
+    "b": "в",
+    "c": "¢",
+    "d": "∂",
+    "e": "є",
+    "f": "ƒ",
+    "g": "ɠ",
+    "h": "н",
+    "i": "ι",
+    "j": "נ",
+    "k": "к",
+    "l": "ℓ",
+    "m": "м",
+    "n": "η",
+    "o": "σ",
+    "p": "ρ",
+    "q": "զ",
+    "r": "я",
+    "s": "ѕ",
+    "t": "т",
+    "u": "υ",
+    "v": "ν",
+    "w": "ω",
+    "x": "χ",
+    "y": "у",
     "z": "z",
 }
-
-
 def special(text):
-    return apply_map(text, SPECIAL_MAP)
-
-
+    return apply_map(
+        text,
+        SPECIAL_MAP
+    )
 # =========================================================
 # UPSIDE DOWN
 # =========================================================
 UPSIDE_DOWN_MAP = {
-    "a": "ɐ", "b": "q", "c": "ɔ", "d": "p", "e": "ǝ",
-    "f": "ɟ", "g": "ƃ", "h": "ɥ", "i": "ᴉ", "j": "ɾ",
-    "k": "ʞ", "l": "ʃ", "m": "ɯ", "n": "u", "o": "o",
-    "p": "d", "q": "b", "r": "ɹ", "s": "s", "t": "ʇ",
-    "u": "n", "v": "ʌ", "w": "ʍ", "x": "x", "y": "ʎ",
+    "a": "ɐ",
+    "b": "q",
+    "c": "ɔ",
+    "d": "p",
+    "e": "ǝ",
+    "f": "ɟ",
+    "g": "ƃ",
+    "h": "ɥ",
+    "i": "ᴉ",
+    "j": "ɾ",
+    "k": "ʞ",
+    "l": "ʃ",
+    "m": "ɯ",
+    "n": "u",
+    "o": "o",
+    "p": "d",
+    "q": "b",
+    "r": "ɹ",
+    "s": "s",
+    "t": "ʇ",
+    "u": "n",
+    "v": "ʌ",
+    "w": "ʍ",
+    "x": "x",
+    "y": "ʎ",
     "z": "z",
-    "A": "∀", "B": "ᗺ", "C": "Ɔ", "D": "◖", "E": "Ǝ",
-    "F": "Ⅎ", "G": "Ꭾ", "H": "H", "I": "I", "J": "Ⴑ",
-    "K": "⋊", "L": "⅃", "M": "M", "N": "N", "O": "O",
-    "P": "Ԁ", "Q": "Q", "R": "Я", "S": "S", "T": "⊥",
-    "U": "∩", "V": "Λ", "W": "M", "X": "X", "Y": "⅄",
+    "A": "∀",
+    "B": "ᗺ",
+    "C": "(cid:0)",
+    "D": "◖",
+    "E": "Ǝ",
+    "F": "(cid:0)",
+    "G": "Ꭾ",
+    "H": "H",
+    "I": "I",
+    "J": "Ⴑ",
+    "K": "⋊",
+    "L": "⅃",
+    "M": "M",
+    "N": "N",
+    "O": "O",
+    "P": "Ԁ",
+    "Q": "Q",
+    "R": "Я",
+    "S": "S",
+    "T": "⊥",
+    "U": "∩",
+    "V": "Λ",
+    "W": "M",
+    "X": "X",
+    "Y": "⅄",
     "Z": "Z",
-    "0": "0", "1": "Ɩ", "2": "ᄅ", "3": "Ɛ", "4": "ㄣ",
-    "5": "ϛ", "6": "9", "7": "ㄥ", "8": "8", "9": "6",
+    "0": "0",
+    "1": "Ɩ",
+    "2": "ᄅ",
+    "3": "Ɛ",
+    "4": "ㄣ",
+    "5": "ϛ",
+    "6": "9",
+    "7": "ㄥ",
+    "8": "8",
+    "9": "6",
 }
-
-
 def upside_down(text):
     return "".join(
-        UPSIDE_DOWN_MAP.get(char, char) for char in reversed(text)
+        UPSIDE_DOWN_MAP.get(
+            char,
+            char
+        )
+        for char in reversed(text)
     )
-
-
 # =========================================================
 # REVERSE
 # =========================================================
 def reverse_text(text):
     return text[::-1]
-
-
 # =========================================================
 # MIRROR
 # =========================================================
 MIRROR_MAP = {
-    "A": "A", "B": "ᗺ", "C": "Ɔ", "D": "◖", "E": "Ǝ",
-    "F": "ꟻ", "G": "Ꭾ", "H": "H", "I": "I", "J": "Ⴑ",
-    "K": "⋊", "L": "⅃", "M": "M", "N": "И", "O": "O",
-    "P": "Ԁ", "Q": "Q", "R": "Я", "S": "S", "T": "⊥",
-    "U": "∩", "V": "Λ", "W": "M", "X": "X", "Y": "⅄",
+    "A": "A",
+    "B": "ᗺ",
+    "C": "(cid:0)",
+    "D": "◖",
+    "E": "Ǝ",
+    "F": "(cid:0)",
+    "G": "Ꭾ",
+    "H": "H",
+    "I": "I",
+    "J": "Ⴑ",
+    "K": "⋊",
+    "L": "⅃",
+    "M": "M",
+    "N": "И",
+    "O": "O",
+    "P": "Ԁ",
+    "Q": "Q",
+    "R": "Я",
+    "S": "S",
+    "T": "⊥",
+    "U": "∩",
+    "V": "Λ",
+    "W": "M",
+    "X": "X",
+    "Y": "⅄",
     "Z": "Z",
-    "a": "ɒ", "b": "d", "c": "ↄ", "d": "b", "e": "ɘ",
-    "f": "ʇ", "g": "ᵷ", "h": "ʜ", "i": "i", "j": "ɾ",
-    "k": "ʞ", "l": "l", "m": "m", "n": "n", "o": "o",
-    "p": "q", "q": "p", "r": "ɿ", "s": "s", "t": "t",
-    "u": "u", "v": "v", "w": "w", "x": "x", "y": "y",
+    "a": "ɒ",
+    "b": "d",
+    "c": "ↄ",
+    "d": "b",
+    "e": "ɘ",
+    "f": "(cid:0)",
+    "g": "ᵷ",
+    "h": "ʜ",
+    "i": "i",
+    "j": "(cid:0)",
+    "k": "ʞ",
+    "l": "l",
+    "m": "m",
+    "n": "n",
+    "o": "o",
+    "p": "q",
+    "q": "p",
+    "r": "ɿ",
+    "s": "s",
+    "t": "t",
+    "u": "u",
+    "v": "v",
+    "w": "w",
+    "x": "x",
+    "y": "y",
     "z": "z",
 }
-
-
 def mirror(text):
-    return "".join(MIRROR_MAP.get(char, char) for char in text[::-1])
-
-
+    return "".join(
+        MIRROR_MAP.get(
+            char,
+            char
+        )
+        for char in text[::-1]
+    )
 # =========================================================
 # BASIC SCREENSHOT HELPERS
 # =========================================================
 def identity(text):
     return text
-
-
 def serif(text):
     return text
-
-
 def serif_italic(text):
-    return apply_map(text, ITALIC_SERIF_MAP)
-
-
+    return apply_map(
+        text,
+        ITALIC_SERIF_MAP
+    )
 def gothic_style(text):
-    return apply_map(text, FRAKTUR_MAP)
-
-
+    return apply_map(
+        text,
+        FRAKTUR_MAP
+    )
 def typewriter(text):
-    return apply_map(text, MONOSPACE_MAP)
-
-
+    return apply_map(
+        text,
+        MONOSPACE_MAP
+    )
 # =========================================================
 # CASE MAP
 # =========================================================
-def case_map(text, mapping, mode):
+def case_map(
+    text,
+    mapping,
+    mode
+):
     if mode == "upper":
         text = text.upper()
     elif mode == "lower":
         text = text.lower()
-    return apply_map(text, mapping)
-
-
-def caps_of(mapping):
-    return lambda text: case_map(text, mapping, "upper")
-
-
-def lower_of(mapping):
-    return lambda text: case_map(text, mapping, "lower")
-
-
-def plain_of(mapping):
-    return lambda text: apply_map(text, mapping)
-
-
+    return apply_map(
+        text,
+        mapping
+    )
+# =========================================================
+# CLEAN STYLE FUNCTIONS
+# =========================================================
+def bold_serif_caps(text):
+    return case_map(
+        text,
+        BOLD_SERIF_MAP,
+        "upper"
+    )
+def bold_serif_lower(text):
+    return case_map(
+        text,
+        BOLD_SERIF_MAP,
+        "lower"
+    )
+def italic_serif_caps(text):
+    return case_map(
+        text,
+        ITALIC_SERIF_MAP,
+        "upper"
+    )
+def italic_serif_lower(text):
+    return case_map(
+        text,
+        ITALIC_SERIF_MAP,
+        "lower"
+    )
+def bold_italic_caps(text):
+    return case_map(
+        text,
+        BOLD_ITALIC_MAP,
+        "upper"
+    )
+def bold_italic_lower(text):
+    return case_map(
+        text,
+        BOLD_ITALIC_MAP,
+        "lower"
+    )
+def sans_caps(text):
+    return case_map(
+        text,
+        SANS_MAP,
+        "upper"
+    )
+def sans_lower(text):
+    return case_map(
+        text,
+        SANS_MAP,
+        "lower"
+    )
+# =========================================================
+# NOTE:
+# "Sans Bold Caps" HAS BEEN REMOVED.
+# =========================================================
+def sans_bold_lower(text):
+    return case_map(
+        text,
+        SANS_BOLD_MAP,
+        "lower"
+    )
+def sans_italic_caps(text):
+    return case_map(
+        text,
+        SANS_ITALIC_MAP,
+        "upper"
+    )
+def sans_italic_lower(text):
+    return case_map(
+        text,
+        SANS_ITALIC_MAP,
+        "lower"
+    )
+def sans_bold_italic_caps(text):
+    return case_map(
+        text,
+        SANS_BOLD_ITALIC_MAP,
+        "upper"
+    )
+def sans_bold_italic_lower(text):
+    return case_map(
+        text,
+        SANS_BOLD_ITALIC_MAP,
+        "lower"
+    )
+def script_caps(text):
+    return case_map(
+        text,
+        SCRIPT_MAP,
+        "upper"
+    )
+def script_lower(text):
+    return case_map(
+        text,
+        SCRIPT_MAP,
+        "lower"
+    )
+def bold_script_caps(text):
+    return case_map(
+        text,
+        BOLD_SCRIPT_MAP,
+        "upper"
+    )
+def bold_script_lower(text):
+    return case_map(
+        text,
+        BOLD_SCRIPT_MAP,
+        "lower"
+    )
+def gothic_caps(text):
+    return case_map(
+        text,
+        FRAKTUR_MAP,
+        "upper"
+    )
+def gothic_lower(text):
+    return case_map(
+        text,
+        FRAKTUR_MAP,
+        "lower"
+    )
+def bold_gothic_caps(text):
+    return case_map(
+        text,
+        BOLD_FRAKTUR_MAP,
+        "upper"
+    )
+def bold_gothic_lower(text):
+    return case_map(
+        text,
+        BOLD_FRAKTUR_MAP,
+        "lower"
+    )
+def double_struck_caps(text):
+    return case_map(
+        text,
+        DOUBLE_STRUCK_MAP,
+        "upper"
+    )
+def double_struck_lower(text):
+    return case_map(
+        text,
+        DOUBLE_STRUCK_MAP,
+        "lower"
+    )
+def monospace_caps(text):
+    return case_map(
+        text,
+        MONOSPACE_MAP,
+        "upper"
+    )
+def monospace_lower(text):
+    return case_map(
+        text,
+        MONOSPACE_MAP,
+        "lower"
+    )
+def fullwidth_caps(text):
+    return case_map(
+        text,
+        FULLWIDTH_MAP,
+        "upper"
+    )
+def fullwidth_lower(text):
+    return case_map(
+        text,
+        FULLWIDTH_MAP,
+        "lower"
+    )
 # =========================================================
 # ALTERNATING STYLES
 # =========================================================
-def alternating(text, map_a, map_b):
+def alternating(
+    text,
+    map_a,
+    map_b
+):
     result = []
     letter_index = 0
     for char in text:
         if char.isalpha():
             if letter_index % 2 == 0:
-                result.append(map_a.get(char, char))
+                result.append(
+                    map_a.get(
+                        char,
+                        char
+                    )
+                )
             else:
-                result.append(map_b.get(char, char))
+                result.append(
+                    map_b.get(
+                        char,
+                        char
+                    )
+                )
             letter_index += 1
         else:
             result.append(char)
     return "".join(result)
-
-
-def alt_of(map_a, map_b):
-    return lambda text: alternating(text, map_a, map_b)
-
-
+def alternating_bold(text):
+    return alternating(
+        text,
+        BOLD_SERIF_MAP,
+        BOLD_ITALIC_MAP
+    )
+def alternating_sans(text):
+    return alternating(
+        text,
+        SANS_MAP,
+        SANS_BOLD_MAP
+    )
+def alternating_script(text):
+    return alternating(
+        text,
+        SCRIPT_MAP,
+        BOLD_SCRIPT_MAP
+    )
+def alternating_gothic(text):
+    return alternating(
+        text,
+        FRAKTUR_MAP,
+        BOLD_FRAKTUR_MAP
+    )
+def alternating_double(text):
+    return alternating(
+        text,
+        DOUBLE_STRUCK_MAP,
+        BOLD_SERIF_MAP
+    )
+def alternating_mono(text):
+    return alternating(
+        text,
+        MONOSPACE_MAP,
+        SANS_MAP
+    )
+def alternating_fullwidth(text):
+    return alternating(
+        text,
+        FULLWIDTH_MAP,
+        BOLD_SERIF_MAP
+    )
+def alternating_italic(text):
+    return alternating(
+        text,
+        ITALIC_SERIF_MAP,
+        BOLD_ITALIC_MAP
+    )
 # =========================================================
 # TITLE STYLES
 # =========================================================
-def title_of(mapping):
-    return lambda text: apply_map(text.title(), mapping)
-
-
+def bold_title(text):
+    converted = text.title()
+    return apply_map(
+        converted,
+        BOLD_SERIF_MAP
+    )
+def script_title(text):
+    converted = text.title()
+    return apply_map(
+        converted,
+        SCRIPT_MAP
+    )
+def gothic_title(text):
+    converted = text.title()
+    return apply_map(
+        converted,
+        FRAKTUR_MAP
+    )
+def sans_title(text):
+    converted = text.title()
+    return apply_map(
+        converted,
+        SANS_MAP
+    )
+def double_title(text):
+    converted = text.title()
+    return apply_map(
+        converted,
+        DOUBLE_STRUCK_MAP
+    )
+def mono_title(text):
+    converted = text.title()
+    return apply_map(
+        converted,
+        MONOSPACE_MAP
+    )
 # =========================================================
 # STYLE REGISTRY
+#
+# IMPORTANT:
+# "Sans Bold Caps" IS NOT HERE.
+# "Overlapping Circles" IS NOT HERE.
+# "Strike Circle" IS NOT HERE.
 # =========================================================
 STYLE_FUNCTIONS = {
+    # -----------------------------------------------------
     # MAIN STYLES
-    "Bold Serif": plain_of(BOLD_SERIF_MAP),
-    "Italic Serif": plain_of(ITALIC_SERIF_MAP),
-    "Bold Italic": plain_of(BOLD_ITALIC_MAP),
-    "Sans Bold": plain_of(SANS_BOLD_MAP),
-    "Sans Italic": plain_of(SANS_ITALIC_MAP),
-    "Sans Bold Italic": plain_of(SANS_BOLD_ITALIC_MAP),
-    "Script": plain_of(SCRIPT_MAP),
-    "Bold Script": plain_of(BOLD_SCRIPT_MAP),
-    "Gothic": plain_of(FRAKTUR_MAP),
-    "Gothic Bold": plain_of(BOLD_FRAKTUR_MAP),
-    "Double Struck": plain_of(DOUBLE_STRUCK_MAP),
-    "Sans": plain_of(SANS_MAP),
-    "Monospace": plain_of(MONOSPACE_MAP),
-    "Fullwidth": plain_of(FULLWIDTH_MAP),
+    # -----------------------------------------------------
+    "Bold Serif":
+        lambda x: apply_map(
+            x,
+            BOLD_SERIF_MAP
+        ),
+    "Italic Serif":
+        lambda x: apply_map(
+            x,
+            ITALIC_SERIF_MAP
+        ),
+    "Bold Italic":
+        lambda x: apply_map(
+            x,
+            BOLD_ITALIC_MAP
+        ),
+    "Sans Bold":
+        lambda x: apply_map(
+            x,
+            SANS_BOLD_MAP
+        ),
+    "Sans Italic":
+        lambda x: apply_map(
+            x,
+            SANS_ITALIC_MAP
+        ),
+    "Sans Bold Italic":
+        lambda x: apply_map(
+            x,
+            SANS_BOLD_ITALIC_MAP
+        ),
+    "Script":
+        lambda x: apply_map(
+            x,
+            SCRIPT_MAP
+        ),
+    "Bold Script":
+        lambda x: apply_map(
+            x,
+            BOLD_SCRIPT_MAP
+        ),
+    "Gothic":
+        lambda x: apply_map(
+            x,
+            FRAKTUR_MAP
+        ),
+    "Gothic Bold":
+        lambda x: apply_map(
+            x,
+            BOLD_FRAKTUR_MAP
+        ),
+    "Double Struck":
+        lambda x: apply_map(
+            x,
+            DOUBLE_STRUCK_MAP
+        ),
+    "Sans":
+        lambda x: apply_map(
+            x,
+            SANS_MAP
+        ),
+    "Monospace":
+        lambda x: apply_map(
+            x,
+            MONOSPACE_MAP
+        ),
+    "Fullwidth":
+        lambda x: apply_map(
+            x,
+            FULLWIDTH_MAP
+        ),
+    # -----------------------------------------------------
     # SCREENSHOT STYLES
-    "Typewriter": typewriter,
-    "Outline": plain_of(DOUBLE_STRUCK_MAP),
-    "Serif": serif,
-    "Serif Italic": serif_italic,
-    "Small Caps": small_caps,
-    "Tiny": tiny,
-    "Comic": comic,
-    "Circled": circled,
-    "Filled Circled": filled_circled,
-    "Squares": squares,
-    "Filled Squares": filled_squares,
-    "Upside Down": upside_down,
-    "Mirror": mirror,
-    "Reverse": reverse_text,
-    "QUNI": quni,
-    "Special": special,
-    "Parenthesized": parenthesized,
+    # -----------------------------------------------------
+    "Typewriter":
+        typewriter,
+    "Outline":
+        lambda x: apply_map(
+            x,
+            DOUBLE_STRUCK_MAP
+        ),
+    "Serif":
+        serif,
+    "Serif Italic":
+        serif_italic,
+    "Small Caps":
+        small_caps,
+    "Tiny":
+        tiny,
+    "Comic":
+        comic,
+    "Circled":
+        circled,
+    "Filled Circled":
+        filled_circled,
+    "Squares":
+        squares,
+    "Filled Squares":
+        filled_squares,
+    "Upside Down":
+        upside_down,
+    "Mirror":
+        mirror,
+    "Reverse":
+        reverse_text,
+    "QUNI":
+        quni,
+    "Special":
+        special,
+    "Parenthesized":
+        parenthesized,
+    # -----------------------------------------------------
     # CLEAN ADDITIONAL STYLES
-    "Bold Serif Caps": caps_of(BOLD_SERIF_MAP),
-    "Bold Serif Lower": lower_of(BOLD_SERIF_MAP),
-    "Italic Serif Caps": caps_of(ITALIC_SERIF_MAP),
-    "Italic Serif Lower": lower_of(ITALIC_SERIF_MAP),
-    "Bold Italic Caps": caps_of(BOLD_ITALIC_MAP),
-    "Bold Italic Lower": lower_of(BOLD_ITALIC_MAP),
-    "Sans Caps": caps_of(SANS_MAP),
-    "Sans Lower": lower_of(SANS_MAP),
+    # -----------------------------------------------------
+    "Bold Serif Caps":
+        bold_serif_caps,
+    "Bold Serif Lower":
+        bold_serif_lower,
+    "Italic Serif Caps":
+        italic_serif_caps,
+    "Italic Serif Lower":
+        italic_serif_lower,
+    "Bold Italic Caps":
+        bold_italic_caps,
+    "Bold Italic Lower":
+        bold_italic_lower,
+    "Sans Caps":
+        sans_caps,
+    "Sans Lower":
+        sans_lower,
     # Sans Bold Caps REMOVED
-    "Sans Bold Lower": lower_of(SANS_BOLD_MAP),
-    "Sans Italic Caps": caps_of(SANS_ITALIC_MAP),
-    "Sans Italic Lower": lower_of(SANS_ITALIC_MAP),
-    "Sans Bold Italic Caps": caps_of(SANS_BOLD_ITALIC_MAP),
-    "Sans Bold Italic Lower": lower_of(SANS_BOLD_ITALIC_MAP),
-    "Script Caps": caps_of(SCRIPT_MAP),
-    "Script Lower": lower_of(SCRIPT_MAP),
-    "Bold Script Caps": caps_of(BOLD_SCRIPT_MAP),
-    "Bold Script Lower": lower_of(BOLD_SCRIPT_MAP),
-    "Gothic Caps": caps_of(FRAKTUR_MAP),
-    "Gothic Lower": lower_of(FRAKTUR_MAP),
-    "Bold Gothic Caps": caps_of(BOLD_FRAKTUR_MAP),
-    "Bold Gothic Lower": lower_of(BOLD_FRAKTUR_MAP),
-    "Double Struck Caps": caps_of(DOUBLE_STRUCK_MAP),
-    "Double Struck Lower": lower_of(DOUBLE_STRUCK_MAP),
-    "Monospace Caps": caps_of(MONOSPACE_MAP),
-    "Monospace Lower": lower_of(MONOSPACE_MAP),
-    "Fullwidth Caps": caps_of(FULLWIDTH_MAP),
-    "Fullwidth Lower": lower_of(FULLWIDTH_MAP),
-    "Alternating Bold": alt_of(BOLD_SERIF_MAP, BOLD_ITALIC_MAP),
-    "Alternating Sans": alt_of(SANS_MAP, SANS_BOLD_MAP),
-    "Alternating Script": alt_of(SCRIPT_MAP, BOLD_SCRIPT_MAP),
-    "Alternating Gothic": alt_of(FRAKTUR_MAP, BOLD_FRAKTUR_MAP),
-    "Alternating Double": alt_of(DOUBLE_STRUCK_MAP, BOLD_SERIF_MAP),
-    "Alternating Monospace": alt_of(MONOSPACE_MAP, SANS_MAP),
-    "Alternating Fullwidth": alt_of(FULLWIDTH_MAP, BOLD_SERIF_MAP),
-    "Alternating Italic": alt_of(ITALIC_SERIF_MAP, BOLD_ITALIC_MAP),
-    "Bold Title": title_of(BOLD_SERIF_MAP),
-    "Script Title": title_of(SCRIPT_MAP),
-    "Gothic Title": title_of(FRAKTUR_MAP),
-    "Sans Title": title_of(SANS_MAP),
-    "Double Title": title_of(DOUBLE_STRUCK_MAP),
-    "Mono Title": title_of(MONOSPACE_MAP),
+    "Sans Bold Lower":
+        sans_bold_lower,
+    "Sans Italic Caps":
+        sans_italic_caps,
+    "Sans Italic Lower":
+        sans_italic_lower,
+    "Sans Bold Italic Caps":
+        sans_bold_italic_caps,
+    "Sans Bold Italic Lower":
+        sans_bold_italic_lower,
+    "Script Caps":
+        script_caps,
+    "Script Lower":
+        script_lower,
+    "Bold Script Caps":
+        bold_script_caps,
+    "Bold Script Lower":
+        bold_script_lower,
+    "Gothic Caps":
+        gothic_caps,
+    "Gothic Lower":
+        gothic_lower,
+    "Bold Gothic Caps":
+        bold_gothic_caps,
+    "Bold Gothic Lower":
+        bold_gothic_lower,
+    "Double Struck Caps":
+        double_struck_caps,
+    "Double Struck Lower":
+        double_struck_lower,
+    "Monospace Caps":
+        monospace_caps,
+    "Monospace Lower":
+        monospace_lower,
+    "Fullwidth Caps":
+        fullwidth_caps,
+    "Fullwidth Lower":
+        fullwidth_lower,
+    "Alternating Bold":
+        alternating_bold,
+    "Alternating Sans":
+        alternating_sans,
+    "Alternating Script":
+        alternating_script,
+    "Alternating Gothic":
+        alternating_gothic,
+    "Alternating Double":
+        alternating_double,
+    "Alternating Monospace":
+        alternating_mono,
+    "Alternating Fullwidth":
+        alternating_fullwidth,
+    "Alternating Italic":
+        alternating_italic,
+    "Bold Title":
+        bold_title,
+    "Script Title":
+        script_title,
+    "Gothic Title":
+        gothic_title,
+    "Sans Title":
+        sans_title,
+    "Double Title":
+        double_title,
+    "Mono Title":
+        mono_title,
 }
-
-STYLE_NAMES = list(STYLE_FUNCTIONS.keys())
-
-
+# =========================================================
+# STYLE ORDER
+#
+# Sans Bold Caps REMOVED
+# Overlapping Circles REMOVED
+# Strike Circle REMOVED
+# =========================================================
+STYLE_NAMES = list(
+    STYLE_FUNCTIONS.keys()
+)
+# =========================================================
+# VERIFY
+# =========================================================
+if len(STYLE_NAMES) != len(STYLE_FUNCTIONS):
+    raise RuntimeError(
+        "Style count mismatch: "
+        f"{len(STYLE_NAMES)} names vs "
+        f"{len(STYLE_FUNCTIONS)} functions"
+    )
 # =========================================================
 # CONVERT TEXT
 # =========================================================
-def convert_text(text: str, style_name: str) -> str:
-    function = STYLE_FUNCTIONS.get(style_name)
+def convert_text(
+    text: str,
+    style_name: str
+) -> str:
+    function = STYLE_FUNCTIONS.get(
+        style_name
+    )
     if function is None:
         return text
     try:
         return function(text)
     except Exception as error:
-        logger.error("Style conversion error [%s]: %s", style_name, error)
+        logger.error(
+            "Style conversion error [%s]: %s",
+            style_name,
+            error,
+        )
         return text
-
-
 # =========================================================
-# BUTTON TEXT (style name rendered in its own style)
+# BUTTON TEXT
+#
+# IMPORTANT:
+# The STYLE NAME itself is displayed
+# using the SAME STYLE.
 # =========================================================
-def style_button_text(style_name: str) -> str:
-    preview = convert_text(style_name, style_name)
+def style_button_text(
+    style_name: str
+) -> str:
+    # Convert the actual style name
+    # using that same style.
+    preview = convert_text(
+        style_name,
+        style_name
+    )
+    # Keep buttons compact.
+    # Do not replace it with "Style".
     if len(preview) > 28:
         preview = preview[:28]
     return preview
-
-
 # =========================================================
-# BUILD KEYBOARD (3 BUTTONS PER ROW)
+# BUILD KEYBOARD
+#
+# 3 BUTTONS PER ROW
 # =========================================================
-def build_style_keyboard(selected_index: int = -1):
+def build_style_keyboard(
+    selected_index: int = -1
+):
     buttons = []
-    for i in range(0, len(STYLE_NAMES), 3):
+    for i in range(
+        0,
+        len(STYLE_NAMES),
+        3
+    ):
         row = []
-        for index in range(i, min(i + 3, len(STYLE_NAMES))):
-            button_text = style_button_text(STYLE_NAMES[index])
+        for index in range(
+            i,
+            min(
+                i + 3,
+                len(STYLE_NAMES)
+            )
+        ):
+            style_name = STYLE_NAMES[
+                index
+            ]
+            # ---------------------------------------------
+            # BUTTON SHOWS STYLE NAME IN ITS OWN STYLE
+            # ---------------------------------------------
+            button_text = (
+                style_button_text(
+                    style_name
+                )
+            )
+            # Selected marker
             if index == selected_index:
-                button_text = "✓ " + button_text
+                button_text = (
+                    "✓ " + button_text
+                )
             row.append(
                 InlineKeyboardButton(
                     text=button_text,
-                    callback_data=f"style:{index}",
+                    callback_data=(
+                        f"style:{index}"
+                    ),
                 )
             )
         buttons.append(row)
-    return InlineKeyboardMarkup(buttons)
-
-
+    return InlineKeyboardMarkup(
+        buttons
+    )
 # =========================================================
 # USER TRACKING
 # =========================================================
@@ -898,8 +1614,8 @@ def format_user_profile(user):
     uname = f"@{username}" if username else "بێ username"
     return (
         "👤 زانیاری بەکارهێنەر\n\n"
-        f"📛 ناو: {html.escape(name)}\n"
-        f"🔗 Username: {html.escape(uname)}\n"
+        f"📛 ناو: {name}\n"
+        f"🔗 Username: {uname}\n"
         f"🆔 User ID: <code>{user_id}</code>\n"
         f"🕐 یەکەم جار: {first_seen}\n"
         f"🕐 دوا جار: {last_seen}"
@@ -980,6 +1696,8 @@ async def users_command(update, context):
         await update.message.reply_text("📭 هیچ بەکارهێنەرێک تۆمار نەکراوە.")
         return
 
+    # Send users in manageable pages. Each user gets a real Telegram
+    # "View Profile" button that opens their profile through a callback.
     chunk_size = 25
     for start_index in range(0, len(users), chunk_size):
         chunk = users[start_index:start_index + chunk_size]
@@ -1023,22 +1741,40 @@ async def is_subscribed(bot, user_id):
             chat_id=CHANNEL_ID,
             user_id=user_id,
         )
+
         return (
-            member.status in ("member", "administrator", "creator")
+            member.status in (
+                "member",
+                "administrator",
+                "creator",
+            )
             or (
                 member.status == "restricted"
                 and getattr(member, "is_member", False)
             )
         )
     except Exception as error:
-        logger.error("Subscription check failed: %s", error)
+        logger.error(
+            "Subscription check failed: %s",
+            error,
+        )
         return False
 
 
 def force_join_keyboard():
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("📢 جۆینی چەناڵ", url=CHANNEL_LINK)],
-        [InlineKeyboardButton("✅ پشکنینی جۆین", callback_data="check_join")],
+        [
+            InlineKeyboardButton(
+                "📢 جۆینی چەناڵ",
+                url=CHANNEL_LINK,
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                "✅ پشکنینی جۆین",
+                callback_data="check_join",
+            )
+        ],
     ])
 
 
@@ -1072,7 +1808,10 @@ async def check_join(update, context):
         return
 
     if await is_subscribed(context.bot, query.from_user.id):
-        await query.answer("✅ جۆینەکەت پشتڕاست کرایەوە.", show_alert=True)
+        await query.answer(
+            "✅ جۆینەکەت پشتڕاست کرایەوە.",
+            show_alert=True,
+        )
         try:
             await query.edit_message_text(
                 text=(
@@ -1083,32 +1822,49 @@ async def check_join(update, context):
         except Exception:
             pass
     else:
-        await query.answer("❌ هێشتا جۆینی چەناڵەکەت نەکردووە.", show_alert=True)
+        await query.answer(
+            "❌ هێشتا جۆینی چەناڵەکەت نەکردووە.",
+            show_alert=True,
+        )
 
 
 # =========================================================
 # START
 # =========================================================
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def start(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
     if not update.message:
         return
 
     is_new = track_user(update.effective_user)
 
     if is_new:
-        await notify_admin_new_user(context.bot, update.effective_user)
+        await notify_admin_new_user(
+            context.bot,
+            update.effective_user,
+        )
 
     if not await require_subscription(update, context):
         return
 
-    await update.message.reply_text(text="Send me an English text.")
-
-
+    await update.message.reply_text(
+        text=(
+            "Send me an English text."
+        )
+    )
 # =========================================================
 # HANDLE USER TEXT
-# The bot message contains ONLY the user's original text.
+#
+# IMPORTANT:
+# The bot message contains ONLY
+# the user's original text.
 # =========================================================
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_message(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
     if not update.message:
         return
 
@@ -1122,26 +1878,55 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_text = update.message.text
     if not user_text.strip():
         return
-
-    context.user_data["current_text"] = user_text
-    context.user_data["selected_style"] = -1
-
-    keyboard = build_style_keyboard(selected_index=-1)
-    safe_text = html.escape(user_text)
-
-    sent_message = await update.message.reply_text(
-        text=safe_text,
-        reply_markup=keyboard,
-        parse_mode="HTML",
+    # -----------------------------------------------------
+    # SAVE ORIGINAL TEXT
+    # -----------------------------------------------------
+    context.user_data[
+        "current_text"
+    ] = user_text
+    context.user_data[
+        "selected_style"
+    ] = -1
+    # -----------------------------------------------------
+    # BUILD KEYBOARD
+    # -----------------------------------------------------
+    keyboard = build_style_keyboard(
+        selected_index=-1
     )
-
-    context.user_data["style_message_id"] = sent_message.message_id
-
-
+    # -----------------------------------------------------
+    # IMPORTANT:
+    #
+    # ONLY USER TEXT
+    #
+    # NO:
+    # - Choose a style
+    # - Style name
+    # - Description
+    # - Extra text
+    # -----------------------------------------------------
+    safe_text = html.escape(
+        user_text
+    )
+    sent_message = (
+        await update.message.reply_text(
+            text=safe_text,
+            reply_markup=keyboard,
+            parse_mode="HTML",
+        )
+    )
+    # -----------------------------------------------------
+    # SAVE BOT MESSAGE ID
+    # -----------------------------------------------------
+    context.user_data[
+        "style_message_id"
+    ] = sent_message.message_id
 # =========================================================
 # BUTTON CLICK
 # =========================================================
-async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_click(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
     query = update.callback_query
     if not query:
         return
@@ -1155,55 +1940,133 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         try:
             await query.message.reply_text(
-                text="🔒 سەرەتا جۆینی چەناڵەکە بکە، پاشان بگەڕێوە بۆ بۆتەکە.",
+                text=(
+                    "🔒 سەرەتا جۆینی چەناڵەکە بکە، پاشان بگەڕێوە بۆ بۆتەکە."
+                ),
                 reply_markup=force_join_keyboard(),
             )
         except Exception:
             pass
         return
 
+    # -----------------------------------------------------
+    # ANSWER CALLBACK
+    # -----------------------------------------------------
     await query.answer()
     data = query.data or ""
-
-    if not data.startswith("style:"):
+    # -----------------------------------------------------
+    # CHECK CALLBACK
+    # -----------------------------------------------------
+    if not data.startswith(
+        "style:"
+    ):
         return
-
+    # -----------------------------------------------------
+    # READ STYLE INDEX
+    # -----------------------------------------------------
     try:
-        style_index = int(data.split(":", 1)[1])
-    except (ValueError, IndexError):
+        style_index = int(
+            data.split(
+                ":",
+                1
+            )[1]
+        )
+    except (
+        ValueError,
+        IndexError
+    ):
         return
-
-    if style_index < 0 or style_index >= len(STYLE_NAMES):
+    # -----------------------------------------------------
+    # CHECK STYLE INDEX
+    # -----------------------------------------------------
+    if (
+        style_index < 0
+        or
+        style_index >= len(
+            STYLE_NAMES
+        )
+    ):
         return
-
-    current_message_id = context.user_data.get("style_message_id")
+    # -----------------------------------------------------
+    # CHECK CURRENT MESSAGE
+    # -----------------------------------------------------
+    current_message_id = (
+        context.user_data.get(
+            "style_message_id"
+        )
+    )
     if (
         current_message_id
-        and query.message
-        and query.message.message_id != current_message_id
+        and
+        query.message
+        and
+        query.message.message_id
+        != current_message_id
     ):
         await query.answer(
             "This style menu is no longer active.",
             show_alert=True,
         )
         return
-
-    user_text = context.user_data.get("current_text", "")
+    # -----------------------------------------------------
+    # GET ORIGINAL USER TEXT
+    # -----------------------------------------------------
+    user_text = (
+        context.user_data.get(
+            "current_text",
+            ""
+        )
+    )
     if not user_text:
         try:
-            await query.edit_message_text(text="Please send a new text.")
+            await query.edit_message_text(
+                text=(
+                    "Please send a new text."
+                )
+            )
         except Exception:
             pass
         return
-
-    style_name = STYLE_NAMES[style_index]
-    styled_text = convert_text(user_text, style_name)
-
-    context.user_data["selected_style"] = style_index
-
-    keyboard = build_style_keyboard(selected_index=style_index)
-    safe_styled_text = html.escape(styled_text)
-
+    # -----------------------------------------------------
+    # GET STYLE NAME
+    # -----------------------------------------------------
+    style_name = STYLE_NAMES[
+        style_index
+    ]
+    # -----------------------------------------------------
+    # CONVERT ORIGINAL TEXT
+    # -----------------------------------------------------
+    styled_text = convert_text(
+        user_text,
+        style_name
+    )
+    # -----------------------------------------------------
+    # SAVE SELECTED STYLE
+    # -----------------------------------------------------
+    context.user_data[
+        "selected_style"
+    ] = style_index
+    # -----------------------------------------------------
+    # BUILD UPDATED KEYBOARD
+    # -----------------------------------------------------
+    keyboard = build_style_keyboard(
+        selected_index=style_index
+    )
+    # =====================================================
+    # IMPORTANT
+    #
+    # THE MESSAGE CONTAINS ONLY THE STYLED TEXT.
+    #
+    # NO STYLE NAME
+    # NO "CHOOSE A STYLE"
+    # NO OTHER TEXT
+    # =====================================================
+    safe_styled_text = html.escape(
+        styled_text
+    )
+    # -----------------------------------------------------
+    # EDIT SAME BOT MESSAGE
+    # -----------------------------------------------------
     try:
         await query.edit_message_text(
             text=safe_styled_text,
@@ -1211,56 +2074,143 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="HTML",
         )
     except Exception as error:
-        if "Message is not modified" not in str(error):
-            logger.error("Message edit failed: %s", error)
-
-
+        error_text = str(error)
+        if (
+            "Message is not modified"
+            not in error_text
+        ):
+            logger.error(
+                "Message edit failed: %s",
+                error,
+            )
 # =========================================================
 # ERROR HANDLER
 # =========================================================
-async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
-    logger.error("Unhandled exception:", exc_info=context.error)
-
-
+async def error_handler(
+    update: object,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    logger.error(
+        "Unhandled exception:",
+        exc_info=context.error,
+    )
 # =========================================================
 # MAIN
 # =========================================================
 def main():
-    if not BOT_TOKEN:
-        raise ValueError(
-            "BOT_TOKEN environment variable is missing. "
-            "Add it in Render -> Environment."
-        )
-
     init_users_db()
 
-    web_thread = threading.Thread(target=run_web_server, daemon=True)
-    web_thread.start()
-
-    application = ApplicationBuilder().token(BOT_TOKEN).build()
-
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("users", users_command))
-    application.add_handler(CommandHandler("user", user_command))
-    application.add_handler(
-        CallbackQueryHandler(user_profile_callback, pattern=r"^profile:\d+$")
+    # Start Flask in a background thread so Render can reach the web service.
+    threading.Thread(target=run_web_server, daemon=True).start()
+    # -----------------------------------------------------
+    # TOKEN VALIDATION
+    # -----------------------------------------------------
+    if (
+        not BOT_TOKEN
+        or
+        BOT_TOKEN
+        == "YOUR_BOT_TOKEN_HERE"
+    ):
+        raise ValueError(
+            "Please put your Telegram "
+            "BOT TOKEN in BOT_TOKEN."
+        )
+    # -----------------------------------------------------
+    # APPLICATION
+    # -----------------------------------------------------
+    application = (
+        ApplicationBuilder()
+        .token(BOT_TOKEN)
+        .build()
     )
+    # -----------------------------------------------------
+    # START
+    # -----------------------------------------------------
     application.add_handler(
-        CallbackQueryHandler(check_join, pattern=r"^check_join$")
+        CommandHandler(
+            "start",
+            start,
+        )
     )
+    # -----------------------------------------------------
+    # USERS COMMAND (ADMIN ONLY)
+    # -----------------------------------------------------
     application.add_handler(
-        CallbackQueryHandler(button_click, pattern=r"^style:\d+$")
+        CommandHandler(
+            "users",
+            users_command,
+        )
     )
+    # -----------------------------------------------------
+    # SINGLE USER PROFILE (ADMIN ONLY)
+    # -----------------------------------------------------
     application.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
+        CommandHandler(
+            "user",
+            user_command,
+        )
     )
-    application.add_error_handler(error_handler)
-
-    logger.info("English Style Font Bot started.")
-    logger.info("Total styles: %d", len(STYLE_NAMES))
-
-    application.run_polling(drop_pending_updates=True)
-
-
+    # -----------------------------------------------------
+    # USER PROFILE BUTTONS (ADMIN ONLY)
+    # -----------------------------------------------------
+    application.add_handler(
+        CallbackQueryHandler(
+            user_profile_callback,
+            pattern=r"^profile:\d+$",
+        )
+    )
+    # -----------------------------------------------------
+    # FORCE JOIN CHECK BUTTON
+    # -----------------------------------------------------
+    application.add_handler(
+        CallbackQueryHandler(
+            check_join,
+            pattern=r"^check_join$",
+        )
+    )
+    # -----------------------------------------------------
+    # INLINE STYLE BUTTONS
+    # -----------------------------------------------------
+    application.add_handler(
+        CallbackQueryHandler(
+            button_click,
+            pattern=r"^style:\d+$",
+        )
+    )
+    # -----------------------------------------------------
+    # TEXT MESSAGES
+    # -----------------------------------------------------
+    application.add_handler(
+        MessageHandler(
+            filters.TEXT
+            & ~filters.COMMAND,
+            handle_message,
+        )
+    )
+    # -----------------------------------------------------
+    # ERROR HANDLER
+    # -----------------------------------------------------
+    application.add_error_handler(
+        error_handler
+    )
+    # -----------------------------------------------------
+    # LOG
+    # -----------------------------------------------------
+    logger.info(
+        "English Style Font Bot started."
+    )
+    logger.info(
+        "Total styles: %d",
+        len(STYLE_NAMES)
+    )
+    # -----------------------------------------------------
+    # RUN
+    # -----------------------------------------------------
+    application.run_polling(
+        drop_pending_updates=True
+    )
+# =========================================================
+# RUN BOT
+# =========================================================
 if __name__ == "__main__":
     main()
