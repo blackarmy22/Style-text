@@ -1,5 +1,5 @@
 # =========================================================
-# ENGLISH STYLE FONT BOT
+# ENGLISH STYLE FONT BOT (OPTIMIZED FOR RENDER WEB SERVICE)
 # =========================================================
 import logging
 import html
@@ -36,19 +36,12 @@ def health():
     return "OK", 200
 
 # =========================================================
-# BOT TOKEN
+# BOT TOKEN & CONFIG
 # =========================================================
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
-
-# =========================================================
-# FORCE JOIN CHANNEL
-# =========================================================
 CHANNEL_ID = "@fontstylem"
 CHANNEL_LINK = "https://t.me/fontstylem"
 
-# =========================================================
-# USER TRACKING / ADMIN
-# =========================================================
 ADMIN_IDS = {
     int(admin_id.strip())
     for admin_id in os.getenv("ADMIN_IDS", "").split(",")
@@ -56,9 +49,6 @@ ADMIN_IDS = {
 }
 USERS_DB = os.getenv("USERS_DB", "users.db")
 
-# =========================================================
-# LOGGING
-# =========================================================
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
@@ -338,10 +328,10 @@ def build_style_keyboard(selected_index: int = -1):
     return InlineKeyboardMarkup(buttons)
 
 # =========================================================
-# USER TRACKING DB
+# DATABASE OPERATIONS
 # =========================================================
 def init_users_db():
-    conn = sqlite3.connect(USERS_DB, timeout=30)
+    conn = sqlite3.connect(USERS_DB, timeout=30, check_same_thread=False)
     try:
         conn.execute("PRAGMA busy_timeout = 30000")
         conn.execute("""
@@ -361,7 +351,7 @@ def init_users_db():
 def track_user(user):
     if not user: return False
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    conn = sqlite3.connect(USERS_DB, timeout=30)
+    conn = sqlite3.connect(USERS_DB, timeout=30, check_same_thread=False)
     try:
         conn.execute("PRAGMA busy_timeout = 30000")
         existing = conn.execute("SELECT user_id FROM users WHERE user_id = ?", (user.id,)).fetchone()
@@ -398,7 +388,7 @@ async def notify_admin_new_user(bot, user):
             logger.error("Failed to notify admin %s: %s", admin_id, error)
 
 def get_users():
-    conn = sqlite3.connect(USERS_DB, timeout=30)
+    conn = sqlite3.connect(USERS_DB, timeout=30, check_same_thread=False)
     try:
         conn.execute("PRAGMA busy_timeout = 30000")
         return conn.execute("SELECT user_id, username, first_name, last_name, first_seen, last_seen FROM users ORDER BY last_seen DESC").fetchall()
@@ -408,7 +398,7 @@ def get_users():
 def is_admin(user_id): return user_id in ADMIN_IDS
 
 def get_user_by_id(user_id):
-    conn = sqlite3.connect(USERS_DB, timeout=30)
+    conn = sqlite3.connect(USERS_DB, timeout=30, check_same_thread=False)
     try:
         conn.execute("PRAGMA busy_timeout = 30000")
         return conn.execute("SELECT user_id, username, first_name, last_name, first_seen, last_seen FROM users WHERE user_id = ?", (user_id,)).fetchone()
@@ -579,15 +569,14 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
     logger.error("Unhandled exception:", exc_info=context.error)
 
 # =========================================================
-# MAIN ASYNC ENGINE FOR RENDER
+# MAIN ASYNC ENGINE (FULLY NON-BLOCKING FOR RENDER)
 # =========================================================
 async def main():
     init_users_db()
 
     if not BOT_TOKEN:
-        raise ValueError("Missing BOT_TOKEN environment variable.")
+        raise ValueError("Missing BOT_TOKEN environment variable in Render > Environment")
 
-    # 1. Build Telegram Application
     application = ApplicationBuilder().token(BOT_TOKEN).build()
 
     application.add_handler(CommandHandler("start", start))
@@ -599,24 +588,19 @@ async def main():
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_error_handler(error_handler)
 
-    # 2. Start Async Web Server for Render Health Check
     port = int(os.environ.get("PORT", 10000))
-    
-    # Run Hypercorn / Werkzeug server asynchronously alongside Telegram Polling
     from werkzeug.serving import run_simple
     
-    # We start Flask server in async executor without blocking asyncio event loop
+    # Run Flask in background without blocking asyncio event loop
     loop = asyncio.get_running_loop()
     loop.run_in_executor(None, lambda: run_simple("0.0.0.0", port, app, use_reloader=False, threaded=True))
 
-    logger.info("Flask Web Server listening on port %d", port)
-    logger.info("English Style Font Bot starting polling...")
+    logger.info("Flask server up and listening on port %d", port)
+    logger.info("Bot starting Telegram Polling...")
 
-    # 3. Initialize and Start Telegram Polling
     async with application:
         await application.start()
         await application.updater.start_polling(drop_pending_updates=True)
-        # Keep running
         await asyncio.Event().wait()
 
 if __name__ == "__main__":
