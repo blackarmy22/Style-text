@@ -1,5 +1,5 @@
 # =========================================================
-# ENGLISH STYLE FONT BOT (OPTIMIZED FOR RENDER WEB SERVICE)
+# ENGLISH STYLE FONT BOT (RENDER OPTIMIZED & ENV CHANNEL)
 # =========================================================
 import logging
 import html
@@ -36,11 +36,13 @@ def health():
     return "OK", 200
 
 # =========================================================
-# BOT TOKEN & CONFIG
+# BOT TOKEN & CONFIG (ENVIRONMENT VARIABLES)
 # =========================================================
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
-CHANNEL_ID = "@fontstylem"
-CHANNEL_LINK = "https://t.me/fontstylem"
+
+# لێرەدا ناو و لینکی چەناڵ لە Environment دەخوێنرێنەوە، ئەگەر نەبوون ئەوا کۆدەکە نرخی پێشوەخت بەکاردێنێت
+CHANNEL_ID = os.getenv("CHANNEL_ID", "@fontstylem").strip()
+CHANNEL_LINK = os.getenv("CHANNEL_LINK", "https://t.me/fontstylem").strip()
 
 ADMIN_IDS = {
     int(admin_id.strip())
