@@ -1,7 +1,7 @@
 services:
 
 - type: web
-  name: style_text
+  name: style-text
   runtime: python
   buildCommand: pip install -r requirements.txt
   startCommand: python english_style_font_bot_render.py
