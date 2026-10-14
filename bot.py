@@ -68,8 +68,8 @@ BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"
 # =========================================================
 # FORCE JOIN CHANNEL
 # =========================================================
-CHANNEL_ID = "@fontstylem"
-CHANNEL_LINK = "https://t.me/fontstylem"
+CHANNEL_ID = "@technology_kurdishB"
+CHANNEL_LINK = "https://t.me/technology_kurdishB"
 
 # =========================================================
 # USER TRACKING / ADMIN
