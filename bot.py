@@ -63,21 +63,25 @@ def run_web_server():
 # =========================================================
 # BOT TOKEN
 # =========================================================
-BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"
+BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 
 # =========================================================
 # FORCE JOIN CHANNEL
 # =========================================================
-CHANNEL_ID = "@technology_kurdishB"
-CHANNEL_LINK = "https://t.me/technology_kurdishB"
+CHANNEL_ID = "@fontstylem"
+CHANNEL_LINK = "https://t.me/fontstylem"
 
 # =========================================================
 # USER TRACKING / ADMIN
 # =========================================================
-# Put your Telegram numeric User ID here.
-# Example: ADMIN_IDS = {123456789}
-ADMIN_IDS = {123456789}
-USERS_DB = "users.db"
+# Set ADMIN_IDS in Render as comma-separated numeric Telegram IDs.
+# Example: ADMIN_IDS=123456789,987654321
+ADMIN_IDS = {
+    int(admin_id.strip())
+    for admin_id in os.getenv("ADMIN_IDS", "").split(",")
+    if admin_id.strip().isdigit()
+}
+USERS_DB = os.getenv("USERS_DB", "users.db")
 # =========================================================
 # LOGGING
 # =========================================================
@@ -1480,8 +1484,9 @@ def build_style_keyboard(
 # USER TRACKING
 # =========================================================
 def init_users_db():
-    conn = sqlite3.connect(USERS_DB)
+    conn = sqlite3.connect(USERS_DB, timeout=30)
     try:
+        conn.execute("PRAGMA busy_timeout = 30000")
         conn.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 user_id INTEGER PRIMARY KEY,
@@ -1502,8 +1507,9 @@ def track_user(user):
         return False
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    conn = sqlite3.connect(USERS_DB)
+    conn = sqlite3.connect(USERS_DB, timeout=30)
     try:
+        conn.execute("PRAGMA busy_timeout = 30000")
         existing = conn.execute(
             "SELECT user_id FROM users WHERE user_id = ?",
             (user.id,),
@@ -1567,8 +1573,9 @@ async def notify_admin_new_user(bot, user):
 
 
 def get_users():
-    conn = sqlite3.connect(USERS_DB)
+    conn = sqlite3.connect(USERS_DB, timeout=30)
     try:
+        conn.execute("PRAGMA busy_timeout = 30000")
         return conn.execute("""
             SELECT user_id, username, first_name, last_name, first_seen, last_seen
             FROM users
@@ -1583,8 +1590,9 @@ def is_admin(user_id):
 
 
 def get_user_by_id(user_id):
-    conn = sqlite3.connect(USERS_DB)
+    conn = sqlite3.connect(USERS_DB, timeout=30)
     try:
+        conn.execute("PRAGMA busy_timeout = 30000")
         return conn.execute(
             """
             SELECT user_id, username, first_name, last_name, first_seen, last_seen
@@ -1614,11 +1622,11 @@ def format_user_profile(user):
     uname = f"@{username}" if username else "بێ username"
     return (
         "👤 زانیاری بەکارهێنەر\n\n"
-        f"📛 ناو: {name}\n"
-        f"🔗 Username: {uname}\n"
+        f"📛 ناو: {html.escape(name)}\n"
+        f"🔗 Username: {html.escape(uname)}\n"
         f"🆔 User ID: <code>{user_id}</code>\n"
-        f"🕐 یەکەم جار: {first_seen}\n"
-        f"🕐 دوا جار: {last_seen}"
+        f"🕐 یەکەم جار: {html.escape(first_seen)}\n"
+        f"🕐 دوا جار: {html.escape(last_seen)}"
     )
 
 
@@ -1698,7 +1706,7 @@ async def users_command(update, context):
 
     # Send users in manageable pages. Each user gets a real Telegram
     # "View Profile" button that opens their profile through a callback.
-    chunk_size = 25
+    chunk_size = 10
     for start_index in range(0, len(users), chunk_size):
         chunk = users[start_index:start_index + chunk_size]
         lines = [
@@ -1868,7 +1876,9 @@ async def handle_message(
     if not update.message:
         return
 
-    track_user(update.effective_user)
+    is_new = track_user(update.effective_user)
+    if is_new:
+        await notify_admin_new_user(context.bot, update.effective_user)
 
     if not await require_subscription(update, context):
         return
@@ -1877,6 +1887,14 @@ async def handle_message(
         return
     user_text = update.message.text
     if not user_text.strip():
+        return
+    # Telegram bot messages have a 4096-character text limit.
+    # Keep room for safe HTML escaping and return a clear message instead
+    # of letting Telegram reject an oversized request.
+    if len(user_text) > 4000:
+        await update.message.reply_text(
+            "⚠️ تکایە دەقەکەت کورتتر بکەوە؛ زۆرترین قەبارەی پشتیوانیکراو ٤٠٠٠ پیتە."
+        )
         return
     # -----------------------------------------------------
     # SAVE ORIGINAL TEXT
@@ -1931,7 +1949,9 @@ async def button_click(
     if not query:
         return
 
-    track_user(query.from_user)
+    is_new = track_user(query.from_user)
+    if is_new:
+        await notify_admin_new_user(context.bot, query.from_user)
 
     if not await is_subscribed(context.bot, query.from_user.id):
         await query.answer(
@@ -2112,8 +2132,8 @@ def main():
         == "YOUR_BOT_TOKEN_HERE"
     ):
         raise ValueError(
-            "Please put your Telegram "
-            "BOT TOKEN in BOT_TOKEN."
+            "Missing BOT_TOKEN environment variable. "
+            "Add your Telegram bot token in Render > Environment."
         )
     # -----------------------------------------------------
     # APPLICATION
