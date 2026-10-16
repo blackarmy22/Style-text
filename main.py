@@ -780,7 +780,7 @@ async def check_join(update, context):
         try:
             await query.edit_message_text(
                 text="✅ جۆینەکەت پشتڕاست کرایەوە.\n\n"
-                "ئێستا دەتوانیت دەقی ئینگلیزی بنێریت بۆ گۆڕینی ستایل."
+                "ئێستا دەقێکی ئینگلیزی بنێرە بۆ گۆڕینی ستایل."
             )
         except Exception:
             pass
@@ -800,7 +800,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await notify_admin_new_user(context.bot, update.effective_user)
     if not await require_subscription(update, context):
         return
-    await update.message.reply_text(text="Send me an English text.")
+    await update.message.reply_text(text="ئێستا دەقێکی ئینگلیزی بنێرە بۆ گۆڕینی ستایل.")
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -863,12 +863,12 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     current_message_id = context.user_data.get("style_message_id")
     if current_message_id and query.message and query.message.message_id != current_message_id:
-        await query.answer("This style menu is no longer active.", show_alert=True)
+        await query.answer("ئەم بەشەی ستایلە چالاک نییە.", show_alert=True)
         return
     user_text = context.user_data.get("current_text", "")
     if not user_text:
         try:
-            await query.edit_message_text(text="Please send a new text.")
+            await query.edit_message_text(text="تکایە دەقێکی نوێ بنێرە.")
         except Exception:
             pass
         return
