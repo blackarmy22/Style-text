@@ -456,7 +456,6 @@ def bold_title(text): return apply_map(text.title(), BOLD_SERIF_MAP)
 def script_title(text): return apply_map(text.title(), SCRIPT_MAP)
 def gothic_title(text): return apply_map(text.title(), FRAKTUR_MAP)
 def sans_title(text): return apply_map(text.title(), SANS_MAP)
-def double_title(text): return apply_map(text.title(), DOUBLE_STRUCK_MAP)
 def mono_title(text): return apply_map(text.title(), MONOSPACE_MAP)
 
 
@@ -557,17 +556,40 @@ def style_button_text(style_name: str) -> str:
     return preview
 
 
-def build_style_keyboard(selected_index: int = -1):
+def build_style_keyboard(page: int = 0, selected_index: int = -1):
+    items_per_page = 21  # 7 ڕیز لە هەر پەڕەیەکدا (٧ * ٣ = ٢١ دوگمە لە هەر پەڕەیەک)
+    total_items = len(STYLE_NAMES)
+    total_pages = (total_items + items_per_page - 1) // items_per_page
+    
+    start_index = page * items_per_page
+    end_index = min(start_index + items_per_page, total_items)
+    
     buttons = []
-    for i in range(0, len(STYLE_NAMES), 3):
+    page_items = list(range(start_index, end_index))
+    
+    for i in range(0, len(page_items), 3):
         row = []
-        for index in range(i, min(i + 3, len(STYLE_NAMES))):
+        for index in page_items[i:i+3]:
             style_name = STYLE_NAMES[index]
             button_text = style_button_text(style_name)
             if index == selected_index:
                 button_text = "✓ " + button_text
-            row.append(InlineKeyboardButton(text=button_text, callback_data=f"style:{index}"))
+            row.append(InlineKeyboardButton(text=button_text, callback_data=f"style:{index}:{page}"))
         buttons.append(row)
+    
+    # دروستکردنی دوگمەکانی گەڕان (پەڕەی پێشتر و پەڕەی دواتر)
+    nav_buttons = []
+    if page > 0:
+        nav_buttons.append(InlineKeyboardButton(text="⬅️ پشتر", callback_data=f"page:{page - 1}"))
+    
+    nav_buttons.append(InlineKeyboardButton(text=f"📄 {page + 1} / {total_pages}", callback_data="noop"))
+    
+    if page < total_pages - 1:
+        nav_buttons.append(InlineKeyboardButton(text="دواتر ➡️", callback_data=f"page:{page + 1}"))
+        
+    if nav_buttons:
+        buttons.append(nav_buttons)
+        
     return InlineKeyboardMarkup(buttons)
 
 
@@ -870,8 +892,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     context.user_data["current_text"] = user_text
     context.user_data["selected_style"] = -1
-    keyboard = build_style_keyboard(selected_index=-1)
-    safe_text = html.escape(user_text)
+    context.user_data["current_page"] = 0
+    
+    keyboard = build_style_keyboard(page=0, selected_index=-1)
+    
+    # بەکارهێنانی ستایڵی یەکەم وەک پێشوەختە بۆ نیشدانی نامەکە بە جوانکاری
+    first_style_name = STYLE_NAMES[0]
+    initial_styled_text = convert_text(user_text, first_style_name)
+    
+    safe_text = html.escape(initial_styled_text)
     sent_message = await update.message.reply_text(
         text=safe_text, reply_markup=keyboard, parse_mode="HTML"
     )
@@ -898,20 +927,44 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception:
             pass
         return
-    await query.answer()
+
     data = query.data or ""
+    
+    # چارەسەرکردنی دوگمەی گەڕانی پەڕەکان (Pagination)
+    if data.startswith("page:"):
+        try:
+            new_page = int(data.split(":", 1)[1])
+            context.user_data["current_page"] = new_page
+            selected_style = context.user_data.get("selected_style", -1)
+            keyboard = build_style_keyboard(page=new_page, selected_index=selected_style)
+            await query.answer()
+            await query.edit_message_reply_markup(reply_markup=keyboard)
+        except Exception:
+            await query.answer()
+        return
+
+    if data == "noop":
+        await query.answer()
+        return
+
     if not data.startswith("style:"):
         return
+        
     try:
-        style_index = int(data.split(":", 1)[1])
+        parts = data.split(":")
+        style_index = int(parts[1])
+        page = int(parts[2]) if len(parts) > 2 else 0
     except (ValueError, IndexError):
         return
+        
     if style_index < 0 or style_index >= len(STYLE_NAMES):
         return
+        
     current_message_id = context.user_data.get("style_message_id")
     if current_message_id and query.message and query.message.message_id != current_message_id:
         await query.answer("ئەم بەشەی ستایلە چالاک نییە.", show_alert=True)
         return
+        
     user_text = context.user_data.get("current_text", "")
     if not user_text:
         try:
@@ -919,11 +972,16 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception:
             pass
         return
+        
     style_name = STYLE_NAMES[style_index]
     styled_text = convert_text(user_text, style_name)
     context.user_data["selected_style"] = style_index
-    keyboard = build_style_keyboard(selected_index=style_index)
+    context.user_data["current_page"] = page
+    
+    keyboard = build_style_keyboard(page=page, selected_index=style_index)
     safe_styled_text = html.escape(styled_text)
+    
+    await query.answer()
     try:
         await query.edit_message_text(
             text=safe_styled_text, reply_markup=keyboard, parse_mode="HTML"
@@ -956,7 +1014,7 @@ async def main():
         CallbackQueryHandler(user_profile_callback, pattern=r"^profile:\d+$")
     )
     application.add_handler(CallbackQueryHandler(check_join, pattern=r"^check_join$"))
-    application.add_handler(CallbackQueryHandler(button_click, pattern=r"^style:\d+$"))
+    application.add_handler(CallbackQueryHandler(button_click, pattern=r"^(style:|page:|noop)"))
     application.add_handler(
         MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
     )
