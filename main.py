@@ -193,7 +193,7 @@ def squares(text):
     )
 
 
-NEGATIVE_SQUARED_UPPER = "🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🆅🆆🆇🆈🆉"
+NEGATIVE_SQUARED_UPPER = "🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🅅🆆🆇🆈🆉"
 
 
 def filled_squares(text):
@@ -425,12 +425,10 @@ STYLE_FUNCTIONS = {
     "Bold Script": lambda x: apply_map(x, BOLD_SCRIPT_MAP),
     "Gothic": lambda x: apply_map(x, FRAKTUR_MAP),
     "Gothic Bold": lambda x: apply_map(x, BOLD_FRAKTUR_MAP),
-    "Double Struck": lambda x: apply_map(x, DOUBLE_STRUCK_MAP),
     "Sans": lambda x: apply_map(x, SANS_MAP),
     "Monospace": lambda x: apply_map(x, MONOSPACE_MAP),
     "Fullwidth": lambda x: apply_map(x, FULLWIDTH_MAP),
     "Typewriter": typewriter,
-    "Outline": lambda x: apply_map(x, DOUBLE_STRUCK_MAP),
     "Serif": serif,
     "Serif Italic": serif_italic,
     "Small Caps": small_caps,
