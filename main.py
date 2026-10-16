@@ -347,6 +347,45 @@ def typewriter(text):
     return apply_map(text, MONOSPACE_MAP)
 
 
+# Functions for the 4 new styles
+def strikethrough(text):
+    return "".join(char + "\u0336" for char in text)
+
+
+def zalgo_text(text):
+    return "".join(char + "\u033d" for char in text)
+
+
+CYRILLIC_MAP = {
+    "A": "Ҽ", "a": "Ҽ", "B": "Ɓ", "b": "ƀ", "C": "С", "c": "с",
+    "D": "Đ", "d": "đ", "E": "Ӗ", "e": "Ҹ", "F": "Ғ", "f": "ƒ",
+    "G": "Ҕ", "g": "ӷ", "H": "Ԝ", "i": "ɪ", "I": "І", "L": "Լ",
+    "l": "ℓ", "M": "Ɱ", "N": "Ͷ", "n": "ᴎ", "O": "Ꙭ", "o": "ꙭ",
+    "R": "Я", "r": "ɼ", "S": "Ş", "s": "ş", "T": "Ͳ", "t": "ƭ",
+    "U": "Ս", "u": "υ", "V": "Ѵ", "v": "ѵ", "W": "Ш", "w": "ш",
+    "X": "Ӿ", "x": "ӿ", "Y": "Ұ", "y": "ұ", "Z": "乙", "z": "ƶ"
+}
+
+def cyrillic_glitch(text):
+    return apply_map(text, CYRILLIC_MAP)
+
+
+DECORATIVE_MAP = {
+    "A": "Ｅ", "a": "𝚎", "B": "𐌁", "b": "𝕓", "C": "𐌂", "c": "𝕔",
+    "D": "𐌃", "d": "𝕕", "E": "𐌄", "e": "𝚎", "F": "𐌅", "f": "𝕗",
+    "G": "𐌆", "g": "𝕘", "H": "𐌇", "h": "𝕙", "I": "𐌈", "i": "𝔦",
+    "J": "𐌉", "j": "𝕛", "K": "𐌊", "k": "𝕜", "L": "𐌋", "l": "𝕝",
+    "M": "𐌌", "m": "𝕞", "N": "𐌍", "n": "𝕟", "O": "𐌎", "o": "𝔬",
+    "P": "𐌏", "p": "𝕡", "Q": "𐌐", "q": "𝕢", "R": "𐌑", "r": "𝕣",
+    "S": "𐌒", "s": "𝕤", "T": "𐌓", "t": "𝕥", "U": "𐌔", "u": "𝔲",
+    "V": "𐌕", "v": "𝔳", "W": "𐌖", "w": "𝔴", "X": "𐌗", "x": "𝔵",
+    "Y": "𐌘", "y": "𝔶", "Z": "𐌙", "z": "𝔷"
+}
+
+def decorative_arrows(text):
+    return apply_map(text, DECORATIVE_MAP)
+
+
 def case_map(text, mapping, mode):
     if mode == "upper":
         text = text.upper()
@@ -444,6 +483,10 @@ STYLE_FUNCTIONS = {
     "QUNI": quni,
     "Special": special,
     "Parenthesized": parenthesized,
+    "Strikethrough": strikethrough,
+    "Zalgo": zalgo_text,
+    "Cyrillic": cyrillic_glitch,
+    "Decorative": decorative_arrows,
     "Bold Serif Caps": bold_serif_caps,
     "Bold Serif Lower": bold_serif_lower,
     "Italic Serif Caps": italic_serif_caps,
