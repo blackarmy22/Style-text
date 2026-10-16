@@ -1,6 +1,7 @@
 # =========================================================
 # ENGLISH STYLE FONT BOT (RENDER OPTIMIZED & ENV CHANNEL)
 # =========================================================
+
 import logging
 import html
 import sqlite3
@@ -8,35 +9,51 @@ import os
 import asyncio
 from flask import Flask
 from datetime import datetime
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import (
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+)
 from telegram.ext import (
-    ApplicationBuilder, CommandHandler, MessageHandler,
-    CallbackQueryHandler, ContextTypes, filters,
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    CallbackQueryHandler,
+    ContextTypes,
+    filters,
 )
 
 # =========================================================
 # RENDER / FLASK WEB SERVER
 # =========================================================
+
 app = Flask(__name__)
+
 
 @app.get("/")
 def home():
     return "English Style Font Bot is running", 200
 
+
 @app.get("/health")
 def health():
     return "OK", 200
 
+
 # =========================================================
-# BOT TOKEN & CONFIG
+# BOT TOKEN & CONFIG (ENVIRONMENT VARIABLES)
 # =========================================================
+
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
+
+# Channel name and link are read from Environment variables.
 CHANNEL_ID = os.getenv("CHANNEL_ID", "@fontstylem").strip()
 CHANNEL_LINK = os.getenv("CHANNEL_LINK", "https://t.me/fontstylem").strip()
+
 ADMIN_IDS = {
-    int(value.strip())
-    for value in os.getenv("ADMIN_IDS", "").split(",")
-    if value.strip().isdigit()
+    int(admin_id.strip())
+    for admin_id in os.getenv("ADMIN_IDS", "").split(",")
+    if admin_id.strip().isdigit()
 }
 USERS_DB = os.getenv("USERS_DB", "users.db")
 
@@ -47,11 +64,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # =========================================================
-# UNICODE FONT MAPS
+# STANDARD CHARACTERS & HELPER
 # =========================================================
+
 UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 LOWER = "abcdefghijklmnopqrstuvwxyz"
 DIGITS = "0123456789"
+
 
 def make_math_map(upper_start=None, lower_start=None, digit_start=None, exceptions=None):
     mapping = {}
@@ -68,6 +87,11 @@ def make_math_map(upper_start=None, lower_start=None, digit_start=None, exceptio
         mapping.update(exceptions)
     return mapping
 
+
+# =========================================================
+# UNICODE FONT MAPS
+# =========================================================
+
 BOLD_SERIF_MAP = make_math_map(0x1D400, 0x1D41A, 0x1D7CE)
 ITALIC_SERIF_MAP = make_math_map(0x1D434, 0x1D44E, exceptions={"h": "ℎ"})
 BOLD_ITALIC_MAP = make_math_map(0x1D468, 0x1D482)
@@ -78,18 +102,29 @@ SANS_BOLD_ITALIC_MAP = make_math_map(0x1D63C, 0x1D656)
 MONOSPACE_MAP = make_math_map(0x1D670, 0x1D68A, 0x1D7F6)
 DOUBLE_STRUCK_MAP = make_math_map(
     0x1D538, 0x1D552, 0x1D7D8,
-    exceptions={"C": "ℂ", "H": "ℍ", "N": "ℕ", "P": "ℙ", "Q": "ℚ", "R": "ℝ", "Z": "ℤ"}
+    exceptions={"C": "ℂ", "H": "ℍ", "N": "ℕ", "P": "ℙ", "Q": "ℚ", "R": "ℝ", "Z": "ℤ"},
 )
 FRAKTUR_MAP = make_math_map(
     0x1D504, 0x1D51E,
-    exceptions={"C": "ℭ", "H": "ℌ", "I": "ℑ", "R": "ℜ", "Z": "ℨ"}
+    exceptions={"C": "ℭ", "H": "ℌ", "I": "ℑ", "R": "ℜ", "Z": "ℨ"},
 )
 BOLD_FRAKTUR_MAP = make_math_map(0x1D56C, 0x1D586)
 SCRIPT_MAP = make_math_map(
     0x1D49C, 0x1D4B6,
-    exceptions={"B": "ℬ", "E": "ℰ", "F": "ℱ", "H": "ℋ", "I": "ℐ", "L": "ℒ", "M": "ℳ", "R": "ℛ", "e": "ℯ", "g": "ℊ", "o": "ℴ"}
+    exceptions={"B": "ℬ", "E": "ℰ", "F": "ℱ", "H": "ℋ", "I": "ℐ", "L": "ℒ", "M": "ℳ", "R": "ℛ", "e": "ℯ", "g": "ℊ", "o": "ℴ"},
 )
 BOLD_SCRIPT_MAP = make_math_map(0x1D4D0, 0x1D4EA)
+
+# Fix special Unicode characters in Script, Fraktur, and Double Struck maps.
+SCRIPT_MAP.update({
+    "B": "ℬ", "E": "ℰ", "F": "ℱ", "H": "ℋ", "I": "ℐ",
+    "L": "ℒ", "M": "ℳ", "R": "ℛ", "e": "ℯ", "g": "ℊ", "o": "ℴ",
+})
+FRAKTUR_MAP.update({"C": "ℭ", "H": "ℌ", "I": "ℑ", "R": "ℜ", "Z": "ℨ"})
+DOUBLE_STRUCK_MAP.update({
+    "C": "ℂ", "H": "ℍ", "N": "ℕ", "P": "ℙ",
+    "Q": "ℚ", "R": "ℝ", "Z": "ℤ",
+})
 
 FULLWIDTH_MAP = {}
 for i, char in enumerate(UPPER):
@@ -99,90 +134,226 @@ for i, char in enumerate(LOWER):
 for i, char in enumerate(DIGITS):
     FULLWIDTH_MAP[char] = chr(0xFF10 + i)
 
+
 def apply_map(text, mapping):
     return "".join(mapping.get(char, char) for char in text)
 
-# Small caps: no dedicated Unicode small-cap f exists, so use ordinary f rather than broken placeholder.
+
 SMALL_CAPS_MAP = {
-    "a":"ᴀ","b":"ʙ","c":"ᴄ","d":"ᴅ","e":"ᴇ","f":"ꜰ","g":"ɢ","h":"ʜ","i":"ɪ",
-    "j":"ᴊ","k":"ᴋ","l":"ʟ","m":"ᴍ","n":"ɴ","o":"ᴏ","p":"ᴘ","q":"ǫ","r":"ʀ",
-    "s":"s","t":"ᴛ","u":"ᴜ","v":"ᴠ","w":"ᴡ","x":"x","y":"ʏ","z":"ᴢ"
+    "a": "ᴀ", "b": "ʙ", "c": "ᴄ", "d": "ᴅ", "e": "ᴇ", "f": "ꜰ",
+    "g": "ɢ", "h": "ʜ", "i": "ɪ", "j": "ᴊ", "k": "ᴋ", "l": "ʟ",
+    "m": "ᴍ", "n": "ɴ", "o": "ᴏ", "p": "ᴘ", "q": "ǫ", "r": "ʀ",
+    "s": "s", "t": "ᴛ", "u": "ᴜ", "v": "ᴠ", "w": "ᴡ", "x": "x",
+    "y": "ʏ", "z": "ᴢ",
 }
+
+
 def small_caps(text):
     return "".join(SMALL_CAPS_MAP.get(char.lower(), char) for char in text)
+
 
 CIRCLED_UPPER = "ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏ"
 CIRCLED_LOWER = "ⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ"
 CIRCLED_DIGITS = "⓪①②③④⑤⑥⑦⑧⑨"
+
+
 def circled(text):
     result = []
     for char in text:
-        if char in UPPER: result.append(CIRCLED_UPPER[UPPER.index(char)])
-        elif char in LOWER: result.append(CIRCLED_LOWER[LOWER.index(char)])
-        elif char in DIGITS: result.append(CIRCLED_DIGITS[DIGITS.index(char)])
-        else: result.append(char)
+        if char in UPPER:
+            result.append(CIRCLED_UPPER[UPPER.index(char)])
+        elif char in LOWER:
+            result.append(CIRCLED_LOWER[LOWER.index(char)])
+        elif char in DIGITS:
+            result.append(CIRCLED_DIGITS[DIGITS.index(char)])
+        else:
+            result.append(char)
     return "".join(result)
 
+
 NEGATIVE_CIRCLED_UPPER = "🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩"
+
+
 def filled_circled(text):
-    return "".join(NEGATIVE_CIRCLED_UPPER[UPPER.index(char.upper())] if char.upper() in UPPER else char for char in text)
+    return "".join(
+        NEGATIVE_CIRCLED_UPPER[UPPER.index(char.upper())]
+        if char.upper() in UPPER else char
+        for char in text
+    )
+
 
 SQUARED_UPPER = "🄰🄱🄲🄳🄴🄵🄶🄷🄸🄹🄺🄻🄼🄽🄾🄿🅀🅁🅂🅃🅄🅅🅆🅇🅈🅉"
+
+
 def squares(text):
-    return "".join(SQUARED_UPPER[UPPER.index(char.upper())] if char.isalpha() and char.upper() in UPPER else char for char in text)
+    return "".join(
+        SQUARED_UPPER[UPPER.index(char.upper())]
+        if char.isalpha() and char.upper() in UPPER else char
+        for char in text
+    )
+
 
 NEGATIVE_SQUARED_UPPER = "🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🆅🆆🆇🆈🆉"
+
+
 def filled_squares(text):
-    return "".join(NEGATIVE_SQUARED_UPPER[UPPER.index(char.upper())] if char.isalpha() and char.upper() in UPPER else char for char in text)
+    return "".join(
+        NEGATIVE_SQUARED_UPPER[UPPER.index(char.upper())]
+        if char.isalpha() and char.upper() in UPPER else char
+        for char in text
+    )
+
 
 PARENTHESIZED_MAP = {
-    "a":"⒜","b":"⒝","c":"⒞","d":"⒟","e":"⒠","f":"⒡","g":"⒢","h":"⒣","i":"⒤","j":"⒥",
-    "k":"⒦","l":"⒧","m":"⒨","n":"⒩","o":"⒪","p":"⒫","q":"⒬","r":"⒭","s":"⒮","t":"⒯",
-    "u":"⒰","v":"⒱","w":"⒲","x":"⒳","y":"⒴","z":"⒵"
+    "a": "⒜", "b": "⒝", "c": "⒞", "d": "⒟", "e": "⒠", "f": "⒡",
+    "g": "⒢", "h": "⒣", "i": "⒤", "j": "⒥", "k": "⒦", "l": "⒧",
+    "m": "⒨", "n": "⒩", "o": "⒪", "p": "⒫", "q": "⒬", "r": "⒭",
+    "s": "⒮", "t": "⒯", "u": "⒰", "v": "⒱", "w": "⒲", "x": "⒳",
+    "y": "⒴", "z": "⒵",
 }
+
+
 def parenthesized(text):
     return "".join(PARENTHESIZED_MAP.get(char.lower(), char) for char in text)
 
-# Superscript alphabet has no standard Unicode character for q, uppercase Q, or several other letters.
+
 TINY_MAP = {
-    "a":"ᵃ","b":"ᵇ","c":"ᶜ","d":"ᵈ","e":"ᵉ","f":"ᶠ","g":"ᵍ","h":"ʰ","i":"ⁱ","j":"ʲ",
-    "k":"ᵏ","l":"ˡ","m":"ᵐ","n":"ⁿ","o":"ᵒ","p":"ᵖ","q":"q","r":"ʳ","s":"ˢ","t":"ᵗ",
-    "u":"ᵘ","v":"ᵛ","w":"ʷ","x":"ˣ","y":"ʸ","z":"ᶻ",
-    "A":"ᴬ","B":"ᴮ","C":"ᶜ","D":"ᴰ","E":"ᴱ","F":"ᶠ","G":"ᴳ","H":"ᴴ","I":"ᴵ","J":"ᴶ",
-    "K":"ᴷ","L":"ᴸ","M":"ᴹ","N":"ᴺ","O":"ᴼ","P":"ᴾ","Q":"Q","R":"ᴿ","S":"ˢ","T":"ᵀ",
-    "U":"ᵁ","V":"ⱽ","W":"ᵂ","X":"ˣ","Y":"ʸ","Z":"ᶻ",
-    "0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹"
+    "a": "ᵃ", "b": "ᵇ", "c": "ᶜ", "d": "ᵈ", "e": "ᵉ", "f": "ᶠ",
+    "g": "ᵍ", "h": "ʰ", "i": "ⁱ", "j": "ʲ", "k": "ᵏ", "l": "ˡ",
+    "m": "ᵐ", "n": "ⁿ", "o": "ᵒ", "p": "ᵖ", "q": "q", "r": "ʳ",
+    "s": "ˢ", "t": "ᵗ", "u": "ᵘ", "v": "ᵛ", "w": "ʷ", "x": "ˣ",
+    "y": "ʸ", "z": "ᶻ", "A": "ᴬ", "B": "ᴮ", "C": "ᶜ", "D": "ᴰ",
+    "E": "ᴱ", "F": "ᶠ", "G": "ᴳ", "H": "ᴴ", "I": "ᴵ", "J": "ᴶ",
+    "K": "ᴷ", "L": "ᴸ", "M": "ᴹ", "N": "ᴺ", "O": "ᴼ", "P": "ᴾ",
+    "Q": "Q", "R": "ᴿ", "S": "ˢ", "T": "ᵀ", "U": "ᵁ", "V": "ⱽ",
+    "W": "ᵂ", "X": "ˣ", "Y": "ʸ", "Z": "ᶻ", "0": "⁰", "1": "¹",
+    "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷",
+    "8": "⁸", "9": "⁹",
 }
+
+
 def tiny(text):
     return "".join(TINY_MAP.get(char, char) for char in text)
 
-COMIC_MAP = {"A":"Ⱥ","a":"ɑ","B":"Ɓ","b":"ɓ","C":"Ƈ","c":"ƈ","D":"Đ","d":"ɗ","E":"Ɛ","e":"ɛ","F":"Ƒ","f":"ƒ","G":"Ɠ","g":"ɠ","H":"Ħ","h":"ɦ","I":"Ɨ","i":"ɨ","J":"Ɉ","j":"ʝ","K":"Ƙ","k":"ƙ","L":"Ł","l":"ł","M":"Ɯ","m":"ɱ","N":"Ɲ","n":"ɲ","O":"Ø","o":"ø","P":"Ƥ","p":"ƥ","Q":"Ɋ","q":"ɋ","R":"Ʀ","r":"ɍ","S":"Ş","s":"ʂ","T":"Ŧ","t":"ŧ","U":"Ʉ","u":"ʉ","V":"Ʋ","v":"ʋ","W":"Ŵ","w":"ŵ","X":"Ӿ","x":"ӿ","Y":"Ƴ","y":"ɏ","Z":"Ƶ","z":"ƶ"}
-def comic(text): return apply_map(text, COMIC_MAP)
 
-QUNI_MAP = {"A":"Ⱥ","a":"Ⱥ","B":"Ɓ","b":"ƀ","C":"Ƈ","c":"ƈ","D":"Đ","d":"đ","E":"Ɇ","e":"ɇ","F":"Ƒ","f":"ƒ","G":"Ǥ","g":"ǥ","H":"Ħ","h":"ħ","I":"Ɨ","i":"ɨ","J":"Ɉ","j":"ɉ","K":"Ƙ","k":"ƙ","L":"Ł","l":"ł","M":"Ṁ","m":"ɱ","N":"Ŋ","n":"ŋ","O":"Ø","o":"ø","P":"Ƥ","p":"ƥ","Q":"Ɋ","q":"ɋ","R":"Ɍ","r":"ɍ","S":"Ş","s":"ş","T":"Ŧ","t":"ŧ","U":"Ʉ","u":"ʉ","V":"Ʋ","v":"ʋ","W":"Ŵ","w":"ŵ","X":"Ӿ","x":"ӿ","Y":"Ɏ","y":"ɏ","Z":"Ƶ","z":"ƶ"}
-def quni(text): return apply_map(text, QUNI_MAP)
+COMIC_MAP = {
+    "A": "Ⱥ", "a": "ɑ", "B": "Ɓ", "b": "ɓ", "C": "Ƈ", "c": "ƈ",
+    "D": "Đ", "d": "ɗ", "E": "Ɛ", "e": "ɛ", "F": "Ƒ", "f": "ƒ",
+    "G": "Ɠ", "g": "ɠ", "H": "Ħ", "h": "ɦ", "I": "Ɨ", "i": "ɨ",
+    "J": "Ɉ", "j": "ʝ", "K": "Ƙ", "k": "ƙ", "L": "Ł", "l": "ł",
+    "M": "Ɯ", "m": "ɱ", "N": "Ɲ", "n": "ɲ", "O": "Ø", "o": "ø",
+    "P": "Ƥ", "p": "ƥ", "Q": "Ɋ", "q": "ɋ", "R": "Ʀ", "r": "ɍ",
+    "S": "Ş", "s": "ʂ", "T": "Ŧ", "t": "ŧ", "U": "Ʉ", "u": "ʉ",
+    "V": "Ʋ", "v": "ʋ", "W": "Ŵ", "w": "ŵ", "X": "Ӿ", "x": "ӿ",
+    "Y": "Ƴ", "y": "ɏ", "Z": "Ƶ", "z": "ƶ",
+}
 
-SPECIAL_MAP = {"A":"Λ","B":"β","C":"C","D":"ᗪ","E":"Σ","F":"Ғ","G":"Ɠ","H":"卄","I":"I","J":"Ј","K":"Ҡ","L":"Ł","M":"爪","N":"И","O":"Ө","P":"尸","Q":"Q","R":"尺","S":"Ѕ","T":"Ŧ","U":"Ц","V":"Ѵ","W":"Ш","X":"Ж","Y":"Ұ","Z":"乙","a":"α","b":"в","c":"¢","d":"∂","e":"є","f":"ƒ","g":"ɠ","h":"н","i":"ι","j":"נ","k":"к","l":"ℓ","m":"м","n":"η","o":"σ","p":"ρ","q":"զ","r":"я","s":"ѕ","t":"т","u":"υ","v":"ν","w":"ω","x":"χ","y":"у","z":"z"}
-def special(text): return apply_map(text, SPECIAL_MAP)
 
-UPSIDE_DOWN_MAP = {"a":"ɐ","b":"q","c":"ɔ","d":"p","e":"ǝ","f":"ɟ","g":"ƃ","h":"ɥ","i":"ᴉ","j":"ɾ","k":"ʞ","l":"ʃ","m":"ɯ","n":"u","o":"o","p":"d","q":"b","r":"ɹ","s":"s","t":"ʇ","u":"n","v":"ʌ","w":"ʍ","x":"x","y":"ʎ","z":"z","A":"∀","B":"ᗺ","C":"Ɔ","D":"◖","E":"Ǝ","F":"Ⅎ","G":"⅁","H":"H","I":"I","J":"ſ","K":"⋊","L":"⅃","M":"W","N":"N","O":"O","P":"Ԁ","Q":"Ό","R":"Я","S":"S","T":"⊥","U":"∩","V":"Λ","W":"M","X":"X","Y":"⅄","Z":"Z","0":"0","1":"Ɩ","2":"ᄅ","3":"Ɛ","4":"ㄣ","5":"ϛ","6":"9","7":"ㄥ","8":"8","9":"6"}
-def upside_down(text): return "".join(UPSIDE_DOWN_MAP.get(char, char) for char in reversed(text))
+def comic(text):
+    return apply_map(text, COMIC_MAP)
 
-def reverse_text(text): return text[::-1]
 
-MIRROR_MAP = {"A":"A","B":"ᗺ","C":"Ɔ","D":"◖","E":"Ǝ","F":"ꟻ","G":"Ꭾ","H":"H","I":"I","J":"Ⴑ","K":"⋊","L":"⅃","M":"M","N":"И","O":"O","P":"Ԁ","Q":"Q","R":"Я","S":"Ƨ","T":"⊥","U":"∩","V":"Λ","W":"M","X":"X","Y":"⅄","Z":"Z","a":"ɒ","b":"d","c":"ↄ","d":"b","e":"ɘ","f":"ɟ","g":"ᵷ","h":"ʜ","i":"i","j":"ɾ","k":"ʞ","l":"l","m":"m","n":"n","o":"o","p":"q","q":"p","r":"ɿ","s":"s","t":"t","u":"u","v":"v","w":"w","x":"x","y":"y","z":"z"}
-def mirror(text): return "".join(MIRROR_MAP.get(char, char) for char in text[::-1])
+QUNI_MAP = {
+    "A": "Ⱥ", "a": "Ⱥ", "B": "Ɓ", "b": "ƀ", "C": "Ƈ", "c": "ƈ",
+    "D": "Đ", "d": "đ", "E": "Ɇ", "e": "ɇ", "F": "Ƒ", "f": "ƒ",
+    "G": "Ǥ", "g": "ǥ", "H": "Ħ", "h": "ħ", "I": "Ɨ", "i": "ɨ",
+    "J": "Ɉ", "j": "ɉ", "K": "Ƙ", "k": "ƙ", "L": "Ł", "l": "ł",
+    "M": "M", "m": "ɱ", "N": "Ŋ", "n": "ŋ", "O": "Ø", "o": "ø",
+    "P": "Ƥ", "p": "ƥ", "Q": "Ɋ", "q": "ɋ", "R": "Ɍ", "r": "ɍ",
+    "S": "Ş", "s": "ş", "T": "Ŧ", "t": "ŧ", "U": "Ʉ", "u": "ʉ",
+    "V": "Ʋ", "v": "ʋ", "W": "Ŵ", "w": "ŵ", "X": "Ӿ", "x": "ӿ",
+    "Y": "Ɏ", "y": "ɏ", "Z": "Ƶ", "z": "ƶ",
+}
 
-def identity(text): return text
-def serif(text): return text
-def serif_italic(text): return apply_map(text, ITALIC_SERIF_MAP)
-def gothic_style(text): return apply_map(text, FRAKTUR_MAP)
-def typewriter(text): return apply_map(text, MONOSPACE_MAP)
+
+def quni(text):
+    return apply_map(text, QUNI_MAP)
+
+
+SPECIAL_MAP = {
+    "A": "Λ", "B": "β", "C": "C", "D": "ᗪ", "E": "Σ", "F": "Ғ",
+    "G": "Ɠ", "H": "卄", "I": "I", "J": "Ј", "K": "Ҡ", "L": "Ł",
+    "M": "爪", "N": "И", "O": "Ө", "P": "尸", "Q": "Q", "R": "尺",
+    "S": "Ѕ", "T": "Ŧ", "U": "Ц", "V": "Ѵ", "W": "Ш", "X": "Ж",
+    "Y": "Ұ", "Z": "乙", "a": "α", "b": "в", "c": "¢", "d": "∂",
+    "e": "є", "f": "ƒ", "g": "ɠ", "h": "н", "i": "ι", "j": "נ",
+    "k": "к", "l": "ℓ", "m": "м", "n": "η", "o": "σ", "p": "ρ",
+    "q": "զ", "r": "я", "s": "ѕ", "t": "т", "u": "υ", "v": "ν",
+    "w": "ω", "x": "χ", "y": "у", "z": "z",
+}
+
+
+def special(text):
+    return apply_map(text, SPECIAL_MAP)
+
+
+UPSIDE_DOWN_MAP = {
+    "a": "ɐ", "b": "q", "c": "ɔ", "d": "p", "e": "ǝ", "f": "ɟ",
+    "g": "ƃ", "h": "ɥ", "i": "ᴉ", "j": "ɾ", "k": "ʞ", "l": "ʃ",
+    "m": "ɯ", "n": "u", "o": "o", "p": "d", "q": "b", "r": "ɹ",
+    "s": "s", "t": "ʇ", "u": "n", "v": "ʌ", "w": "ʍ", "x": "x",
+    "y": "ʎ", "z": "z", "A": "∀", "B": "ᗺ", "C": "Ɔ", "D": "◖",
+    "E": "Ǝ", "F": "Ⅎ", "G": "Ꭾ", "H": "H", "I": "I", "J": "Ⴑ",
+    "K": "⋊", "L": "⅃", "M": "M", "N": "N", "O": "O", "P": "Ԁ",
+    "Q": "Q", "R": "Я", "S": "S", "T": "⊥", "U": "∩", "V": "Λ",
+    "W": "M", "X": "X", "Y": "⅄", "Z": "Z", "0": "0", "1": "Ɩ",
+    "2": "ᄅ", "3": "Ɛ", "4": "ㄣ", "5": "ϛ", "6": "9", "7": "ㄥ",
+    "8": "8", "9": "6",
+}
+
+
+def upside_down(text):
+    return "".join(UPSIDE_DOWN_MAP.get(char, char) for char in reversed(text))
+
+
+def reverse_text(text):
+    return text[::-1]
+
+
+MIRROR_MAP = {
+    "A": "A", "B": "ᗺ", "C": "Ɔ", "D": "◖", "E": "Ǝ", "F": "Ⅎ",
+    "G": "Ꭾ", "H": "H", "I": "I", "J": "Ⴑ", "K": "⋊", "L": "⅃",
+    "M": "M", "N": "И", "O": "O", "P": "Ԁ", "Q": "Q", "R": "Я",
+    "S": "S", "T": "⊥", "U": "∩", "V": "Λ", "W": "M", "X": "X",
+    "Y": "⅄", "Z": "Z", "a": "ɒ", "b": "d", "c": "ↄ", "d": "b",
+    "e": "ɘ", "f": "ɟ", "g": "ᵷ", "h": "ʜ", "i": "i", "j": "ɾ",
+    "k": "ʞ", "l": "l", "m": "m", "n": "n", "o": "o", "p": "q",
+    "q": "p", "r": "ɿ", "s": "s", "t": "t", "u": "u", "v": "v",
+    "w": "w", "x": "x", "y": "y", "z": "z",
+}
+
+
+def mirror(text):
+    return "".join(MIRROR_MAP.get(char, char) for char in text[::-1])
+
+
+def identity(text):
+    return text
+
+
+def serif(text):
+    return text
+
+
+def serif_italic(text):
+    return apply_map(text, ITALIC_SERIF_MAP)
+
+
+def gothic_style(text):
+    return apply_map(text, FRAKTUR_MAP)
+
+
+def typewriter(text):
+    return apply_map(text, MONOSPACE_MAP)
+
 
 def case_map(text, mapping, mode):
-    if mode == "upper": text = text.upper()
-    elif mode == "lower": text = text.lower()
+    if mode == "upper":
+        text = text.upper()
+    elif mode == "lower":
+        text = text.lower()
     return apply_map(text, mapping)
+
 
 def bold_serif_caps(text): return case_map(text, BOLD_SERIF_MAP, "upper")
 def bold_serif_lower(text): return case_map(text, BOLD_SERIF_MAP, "lower")
@@ -212,8 +383,10 @@ def monospace_lower(text): return case_map(text, MONOSPACE_MAP, "lower")
 def fullwidth_caps(text): return case_map(text, FULLWIDTH_MAP, "upper")
 def fullwidth_lower(text): return case_map(text, FULLWIDTH_MAP, "lower")
 
+
 def alternating(text, map_a, map_b):
-    result, letter_index = [], 0
+    result = []
+    letter_index = 0
     for char in text:
         if char.isalpha():
             result.append(map_a.get(char, char) if letter_index % 2 == 0 else map_b.get(char, char))
@@ -221,6 +394,7 @@ def alternating(text, map_a, map_b):
         else:
             result.append(char)
     return "".join(result)
+
 
 def alternating_bold(text): return alternating(text, BOLD_SERIF_MAP, BOLD_ITALIC_MAP)
 def alternating_sans(text): return alternating(text, SANS_MAP, SANS_BOLD_MAP)
@@ -231,12 +405,14 @@ def alternating_mono(text): return alternating(text, MONOSPACE_MAP, SANS_MAP)
 def alternating_fullwidth(text): return alternating(text, FULLWIDTH_MAP, BOLD_SERIF_MAP)
 def alternating_italic(text): return alternating(text, ITALIC_SERIF_MAP, BOLD_ITALIC_MAP)
 
+
 def bold_title(text): return apply_map(text.title(), BOLD_SERIF_MAP)
 def script_title(text): return apply_map(text.title(), SCRIPT_MAP)
 def gothic_title(text): return apply_map(text.title(), FRAKTUR_MAP)
 def sans_title(text): return apply_map(text.title(), SANS_MAP)
 def double_title(text): return apply_map(text.title(), DOUBLE_STRUCK_MAP)
 def mono_title(text): return apply_map(text.title(), MONOSPACE_MAP)
+
 
 STYLE_FUNCTIONS = {
     "Bold Serif": lambda x: apply_map(x, BOLD_SERIF_MAP),
@@ -312,7 +488,9 @@ STYLE_FUNCTIONS = {
     "Double Title": double_title,
     "Mono Title": mono_title,
 }
+
 STYLE_NAMES = list(STYLE_FUNCTIONS.keys())
+
 
 def convert_text(text: str, style_name: str) -> str:
     function = STYLE_FUNCTIONS.get(style_name)
@@ -320,22 +498,17 @@ def convert_text(text: str, style_name: str) -> str:
         return text
     try:
         return function(text)
-    except Exception:
-        logger.exception("Style conversion error [%s]", style_name)
+    except Exception as error:
+        logger.error("Style conversion error [%s]: %s", style_name, error)
         return text
 
+
 def style_button_text(style_name: str) -> str:
-    # Button shows a readable style label, not the style name converted by itself.
-    labels = {
-        "Bold Serif": "𝐁𝐨𝐥𝐝", "Italic Serif": "𝘐𝘵𝘢𝘭𝘪𝘤",
-        "Bold Italic": "𝐁𝙤𝙡𝙙 𝘐𝘵𝘢𝘭𝘪𝘤", "Sans Bold": "𝗦𝗮𝗻𝘀 𝗕𝗼𝗹𝗱",
-        "Sans Italic": "𝘚𝘢𝘯𝘴 𝘐𝘵𝘢𝘭𝘪𝘤", "Script": "𝒮𝒸𝓇𝒾𝓅𝓉",
-        "Bold Script": "𝓑𝓸𝓵𝓭 𝓢𝓬𝓻𝓲𝓹𝓽", "Gothic": "𝔊𝔬𝔱𝔥𝔦𝔠",
-        "Double Struck": "𝔻𝕠𝕦𝕓𝕝𝕖", "Monospace": "𝙼𝚘𝚗𝚘",
-        "Small Caps": "Sᴍᴀʟʟ Cᴀᴘs", "Tiny": "ᵀⁱⁿʸ",
-        "Upside Down": "Upside Down", "Mirror": "Mirror",
-    }
-    return labels.get(style_name, style_name)[:28]
+    preview = convert_text(style_name, style_name)
+    if len(preview) > 28:
+        preview = preview[:28]
+    return preview
+
 
 def build_style_keyboard(selected_index: int = -1):
     buttons = []
@@ -350,20 +523,29 @@ def build_style_keyboard(selected_index: int = -1):
         buttons.append(row)
     return InlineKeyboardMarkup(buttons)
 
+
 # =========================================================
-# DATABASE
+# DATABASE OPERATIONS
 # =========================================================
+
 def init_users_db():
     conn = sqlite3.connect(USERS_DB, timeout=30, check_same_thread=False)
     try:
         conn.execute("PRAGMA busy_timeout = 30000")
-        conn.execute("""CREATE TABLE IF NOT EXISTS users (
-            user_id INTEGER PRIMARY KEY, username TEXT, first_name TEXT, last_name TEXT,
-            first_seen TEXT NOT NULL, last_seen TEXT NOT NULL
-        )""")
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                user_id INTEGER PRIMARY KEY,
+                username TEXT,
+                first_name TEXT,
+                last_name TEXT,
+                first_seen TEXT NOT NULL,
+                last_seen TEXT NOT NULL
+            )
+        """)
         conn.commit()
     finally:
         conn.close()
+
 
 def track_user(user):
     if not user:
@@ -372,65 +554,95 @@ def track_user(user):
     conn = sqlite3.connect(USERS_DB, timeout=30, check_same_thread=False)
     try:
         conn.execute("PRAGMA busy_timeout = 30000")
-        existing = conn.execute("SELECT user_id FROM users WHERE user_id = ?", (user.id,)).fetchone()
-        conn.execute("""INSERT INTO users (user_id, username, first_name, last_name, first_seen, last_seen)
+        existing = conn.execute(
+            "SELECT user_id FROM users WHERE user_id = ?", (user.id,)
+        ).fetchone()
+        is_new = existing is None
+        conn.execute("""
+            INSERT INTO users (user_id, username, first_name, last_name, first_seen, last_seen)
             VALUES (?, ?, ?, ?, ?, ?)
-            ON CONFLICT(user_id) DO UPDATE SET username=excluded.username,
-            first_name=excluded.first_name, last_name=excluded.last_name, last_seen=excluded.last_seen""",
-            (user.id, user.username, user.first_name, user.last_name, now, now))
+            ON CONFLICT(user_id) DO UPDATE SET
+                username = excluded.username,
+                first_name = excluded.first_name,
+                last_name = excluded.last_name,
+                last_seen = excluded.last_seen
+        """, (user.id, user.username, user.first_name, user.last_name, now, now))
         conn.commit()
-        return existing is None
+        return is_new
     finally:
         conn.close()
+
 
 async def notify_admin_new_user(bot, user):
     if not user:
         return
     username = f"@{user.username}" if user.username else "بێ Username"
     name = user.full_name or "بێ ناو"
-    text = ("🆕 <b>بەکارهێنەری نوێ!</b>\\n\\n"
-            f"👤 ناو: {html.escape(name)}\\n"
-            f"📛 Username: {html.escape(username)}\\n"
-            f"🆔 User ID: <code>{user.id}</code>")
-    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("👤 View Profile", url=f"tg://user?id={user.id}")]])
+    text = (
+        "🆕 <b>بەکارهێنەری نوێ!</b>\n\n"
+        f"👤 ناو: {html.escape(name)}\n"
+        f"📛 Username: {html.escape(username)}\n"
+        f"🆔 User ID: <code>{user.id}</code>"
+    )
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("👤 View Profile", url=f"tg://user?id={user.id}")]
+    ])
     for admin_id in ADMIN_IDS:
         try:
-            await bot.send_message(chat_id=admin_id, text=text, parse_mode="HTML", reply_markup=keyboard)
+            await bot.send_message(
+                chat_id=admin_id, text=text, parse_mode="HTML", reply_markup=keyboard
+            )
         except Exception as error:
             logger.error("Failed to notify admin %s: %s", admin_id, error)
+
 
 def get_users():
     conn = sqlite3.connect(USERS_DB, timeout=30, check_same_thread=False)
     try:
         conn.execute("PRAGMA busy_timeout = 30000")
-        return conn.execute("SELECT user_id, username, first_name, last_name, first_seen, last_seen FROM users ORDER BY last_seen DESC").fetchall()
+        return conn.execute(
+            "SELECT user_id, username, first_name, last_name, first_seen, last_seen "
+            "FROM users ORDER BY last_seen DESC"
+        ).fetchall()
     finally:
         conn.close()
 
+
 def is_admin(user_id):
     return user_id in ADMIN_IDS
+
 
 def get_user_by_id(user_id):
     conn = sqlite3.connect(USERS_DB, timeout=30, check_same_thread=False)
     try:
         conn.execute("PRAGMA busy_timeout = 30000")
-        return conn.execute("SELECT user_id, username, first_name, last_name, first_seen, last_seen FROM users WHERE user_id = ?", (user_id,)).fetchone()
+        return conn.execute(
+            "SELECT user_id, username, first_name, last_name, first_seen, last_seen "
+            "FROM users WHERE user_id = ?", (user_id,)
+        ).fetchone()
     finally:
         conn.close()
 
+
 def profile_keyboard(user_id):
-    return InlineKeyboardMarkup([[InlineKeyboardButton("👤 View Profile", url=f"tg://user?id={user_id}")]])
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("👤 View Profile", url=f"tg://user?id={user_id}")]
+    ])
+
 
 def format_user_profile(user):
     user_id, username, first_name, last_name, first_seen, last_seen = user
     name = " ".join(x for x in [first_name, last_name] if x) or "بێ ناو"
     uname = f"@{username}" if username else "بێ username"
-    return ("👤 زانیاری بەکارهێنەر\\n\\n"
-            f"📛 ناو: {html.escape(name)}\\n"
-            f"🔗 Username: {html.escape(uname)}\\n"
-            f"🆔 User ID: <code>{user_id}</code>\\n"
-            f"🕐 یەکەم جار: {html.escape(first_seen)}\\n"
-            f"🕐 دوا جار: {html.escape(last_seen)}")
+    return (
+        "👤 زانیاری بەکارهێنەر\n\n"
+        f"📛 ناو: {html.escape(name)}\n"
+        f"🔗 Username: {html.escape(uname)}\n"
+        f"🆔 User ID: <code>{user_id}</code>\n"
+        f"🕐 یەکەم جار: {html.escape(first_seen)}\n"
+        f"🕐 دوا جار: {html.escape(last_seen)}"
+    )
+
 
 async def user_command(update, context):
     if not update.effective_user or not is_admin(update.effective_user.id):
@@ -438,8 +650,7 @@ async def user_command(update, context):
             await update.message.reply_text("❌ ئەم فرمانە تەنها بۆ ئەدمینە.")
         return
     if not update.message or not context.args:
-        if update.message:
-            await update.message.reply_text("ℹ️ شێوازی بەکارهێنان:\\n/user USER_ID")
+        await update.message.reply_text("ℹ️ شێوازی بەکارهێنان:\n/user USER_ID")
         return
     try:
         user_id = int(context.args[0])
@@ -450,26 +661,33 @@ async def user_command(update, context):
     if not user:
         await update.message.reply_text("❌ ئەم User ID ـیە لە دیتابەیسەکەدا نییە.")
         return
-    await update.message.reply_text(format_user_profile(user), parse_mode="HTML", reply_markup=profile_keyboard(user_id))
+    await update.message.reply_text(
+        format_user_profile(user),
+        parse_mode="HTML",
+        reply_markup=profile_keyboard(user_id),
+    )
+
 
 async def user_profile_callback(update, context):
     query = update.callback_query
-    if not query:
-        return
-    if not query.from_user or not is_admin(query.from_user.id):
-        await query.answer("❌ تەنها ئەدمین دەتوانێت ئەمە ببینێت.", show_alert=True)
+    if not query or not query.from_user or not is_admin(query.from_user.id):
+        if query:
+            await query.answer("❌ تەنها ئەدمین دەتوانێت ئەمە ببینێت.", show_alert=True)
         return
     try:
         user_id = int((query.data or "").split(":", 1)[1])
     except (ValueError, IndexError):
-        await query.answer("هەڵەیەک ڕوویدا.")
         return
     user = get_user_by_id(user_id)
     if not user:
-        await query.answer("بەکارهێنەر نەدۆزرایەوە.", show_alert=True)
         return
     await query.answer()
-    await query.message.reply_text(format_user_profile(user), parse_mode="HTML", reply_markup=profile_keyboard(user_id))
+    await query.message.reply_text(
+        format_user_profile(user),
+        parse_mode="HTML",
+        reply_markup=profile_keyboard(user_id),
+    )
+
 
 async def users_command(update, context):
     if not update.effective_user or not is_admin(update.effective_user.id):
@@ -483,33 +701,59 @@ async def users_command(update, context):
     chunk_size = 10
     for start_index in range(0, len(users), chunk_size):
         chunk = users[start_index:start_index + chunk_size]
-        lines = [f"👥 کۆی گشتی بەکارهێنەران: {len(users)}",
-                 f"📄 بەکارهێنەرەکان {start_index + 1} - {start_index + len(chunk)}", ""]
+        lines = [
+            f"👥 کۆی گشتی بەکارهێنەران: {len(users)}",
+            f"📄 بەکارهێنەرەکان {start_index + 1} - {start_index + len(chunk)}",
+            "",
+        ]
         keyboard = []
-        for i, (user_id, username, first_name, last_name, first_seen, last_seen) in enumerate(chunk, start_index + 1):
+        for i, (user_id, username, first_name, last_name, first_seen, last_seen) in enumerate(
+            chunk, start_index + 1
+        ):
             name = " ".join(x for x in [first_name, last_name] if x) or "بێ ناو"
             uname = f"@{username}" if username else "بێ username"
-            lines.append(f"{i}. {html.escape(name)} | {html.escape(uname)}\\n🆔 <code>{user_id}</code>\\n🕐 یەکەم: {html.escape(first_seen)} | دوا: {html.escape(last_seen)}")
-            keyboard.append([InlineKeyboardButton(f"👤 View Profile — {name[:35]}", callback_data=f"profile:{user_id}")])
-        await update.message.reply_text("\\n\\n".join(lines), parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            lines.append(
+                f"{i}. {html.escape(name)} | {html.escape(uname)}\n"
+                f"🆔 <code>{user_id}</code>\n🕐 یەکەم: {first_seen} | دوا: {last_seen}"
+            )
+            keyboard.append([
+                InlineKeyboardButton(
+                    f"👤 View Profile — {name[:35]}",
+                    callback_data=f"profile:{user_id}",
+                )
+            ])
+        await update.message.reply_text(
+            "\n\n".join(lines),
+            parse_mode="HTML",
+            reply_markup=InlineKeyboardMarkup(keyboard),
+        )
+
 
 # =========================================================
-# FORCE JOIN
+# FORCE JOIN HELPERS
 # =========================================================
+
 async def is_subscribed(bot, user_id):
     try:
         member = await bot.get_chat_member(chat_id=CHANNEL_ID, user_id=user_id)
-        return (member.status in ("member", "administrator", "creator") or
-                (member.status == "restricted" and getattr(member, "is_member", False)))
+        return (
+            member.status in ("member", "administrator", "creator")
+            or (
+                member.status == "restricted"
+                and getattr(member, "is_member", False)
+            )
+        )
     except Exception as error:
-        logger.error("Subscription check failed for user %s: %s", user_id, error)
+        logger.error("Subscription check failed: %s", error)
         return False
+
 
 def force_join_keyboard():
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("📢 جۆینی چەناڵ", url=CHANNEL_LINK)],
-        [InlineKeyboardButton("✅ پشکنینی جۆین", callback_data="check_join")]
+        [InlineKeyboardButton("✅ پشکنینی جۆین", callback_data="check_join")],
     ])
+
 
 async def require_subscription(update, context):
     user = update.effective_user
@@ -517,12 +761,15 @@ async def require_subscription(update, context):
         return False
     if await is_subscribed(context.bot, user.id):
         return True
-    text = ("🔒 بۆ بەکارهێنانی بۆتەکە، سەرەتا دەبێت جۆینی چەناڵەکەمان بکەیت.\\n\\n"
-            "1️⃣ لەسەر «📢 جۆینی چەناڵ» دابگرە.\\n"
-            "2️⃣ دوای جۆینکردن، «✅ پشکنینی جۆین» دابگرە.")
+    text = (
+        "🔒 بۆ بەکارهێنانی بۆتەکە، سەرەتا دەبێت جۆینی چەناڵەکەمان بکەیت.\n\n"
+        "1️⃣ لەسەر «📢 جۆینی چەناڵ» دابگرە\n"
+        "2️⃣ پاشان «✅ پشکنینی جۆین» دابگرە"
+    )
     if update.message:
         await update.message.reply_text(text=text, reply_markup=force_join_keyboard())
     return False
+
 
 async def check_join(update, context):
     query = update.callback_query
@@ -532,19 +779,19 @@ async def check_join(update, context):
         await query.answer("✅ جۆینەکەت پشتڕاست کرایەوە.", show_alert=True)
         try:
             await query.edit_message_text(
-                "✅ جۆینەکەت پشتڕاست کرایەوە!\\n\\n"
-                "✍️ ئێستا دەقی ئینگلیزی بنێرە.\\n"
-                "🎨 پاشان یەکێک لە دوگمەکانی ستایل هەڵبژێرە.\\n"
-                "📋 دەقی ستایڵدار لە هەمان پەیامدا دەردەکەوێت."
+                text="✅ جۆینەکەت پشتڕاست کرایەوە.\n\n"
+                "ئێستا دەتوانیت دەقی ئینگلیزی بنێریت بۆ گۆڕینی ستایل."
             )
         except Exception:
             pass
     else:
-        await query.answer("❌ هێشتا جۆینی چەناڵەکەت نەکردووە. سەرەتا جۆین بکە.", show_alert=True)
+        await query.answer("❌ هێشتا جۆینی چەناڵەکەت نەکردووە.", show_alert=True)
+
 
 # =========================================================
 # BOT HANDLERS
 # =========================================================
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message:
         return
@@ -553,13 +800,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await notify_admin_new_user(context.bot, update.effective_user)
     if not await require_subscription(update, context):
         return
-    await update.message.reply_text(
-        "👋 بەخێربێیت بۆ بۆتی ستایڵی فۆنت!\\n\\n"
-        "✍️ دەقی ئینگلیزی خۆت بنێرە.\\n"
-        "🎨 لە دوگمەکاندا ستایڵی دڵخوازت هەڵبژێرە.\\n"
-        "📋 دەتوانیت دەقی گۆڕدراو کۆپی بکەیت و لە هەر شوێنێک بەکاری بهێنیت.\\n\\n"
-        "ℹ️ بۆ گەڕانەوە بۆ سەرەتا /start بنێرە."
-    )
+    await update.message.reply_text(text="Send me an English text.")
+
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message:
@@ -575,18 +817,19 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not user_text.strip():
         return
     if len(user_text) > 4000:
-        await update.message.reply_text("⚠️ تکایە دەقەکەت کورتتر بکەوە؛ زۆرترین قەبارەی پشتیوانیکراو ٤٠٠٠ پیتە.")
+        await update.message.reply_text(
+            "⚠️ تکایە دەقەکەت کورتتر بکەوە؛ زۆرترین قەبارەی پشتیوانیکراو ٤٠٠٠ پیتە."
+        )
         return
     context.user_data["current_text"] = user_text
     context.user_data["selected_style"] = -1
     keyboard = build_style_keyboard(selected_index=-1)
     safe_text = html.escape(user_text)
     sent_message = await update.message.reply_text(
-        text=f"✍️ دەقی تۆ:\\n{safe_text}\\n\\n🎨 ستایڵێک هەڵبژێرە:",
-        reply_markup=keyboard,
-        parse_mode="HTML"
+        text=safe_text, reply_markup=keyboard, parse_mode="HTML"
     )
     context.user_data["style_message_id"] = sent_message.message_id
+
 
 async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -596,36 +839,39 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if is_new:
         await notify_admin_new_user(context.bot, query.from_user)
     if not await is_subscribed(context.bot, query.from_user.id):
-        await query.answer("❌ بۆ بەکارهێنانی بۆتەکە سەرەتا جۆینی چەناڵ بکە.", show_alert=True)
+        await query.answer(
+            "❌ بۆ بەکارهێنانی بۆتەکە دەبێت سەرەتا جۆینی چەناڵ بکەیت.",
+            show_alert=True,
+        )
         try:
             await query.message.reply_text(
-                "🔒 سەرەتا جۆینی چەناڵەکە بکە، پاشان «پشکنینی جۆین» دابگرە.",
-                reply_markup=force_join_keyboard()
+                text="🔒 سەرەتا جۆینی چەناڵەکە بکە، پاشان بگەڕێوە بۆ بۆتەکە.",
+                reply_markup=force_join_keyboard(),
             )
         except Exception:
             pass
         return
+    await query.answer()
     data = query.data or ""
     if not data.startswith("style:"):
-        await query.answer()
         return
     try:
         style_index = int(data.split(":", 1)[1])
     except (ValueError, IndexError):
-        await query.answer("هەڵەیەک ڕوویدا.")
         return
     if style_index < 0 or style_index >= len(STYLE_NAMES):
-        await query.answer("ستایڵی هەڵبژێردراو دروست نییە.")
         return
     current_message_id = context.user_data.get("style_message_id")
     if current_message_id and query.message and query.message.message_id != current_message_id:
-        await query.answer("ئەم مێنیوە کۆنە؛ تکایە دەقێکی نوێ بنێرە.", show_alert=True)
+        await query.answer("This style menu is no longer active.", show_alert=True)
         return
     user_text = context.user_data.get("current_text", "")
     if not user_text:
-        await query.answer("تکایە دەقێکی نوێ بنێرە.", show_alert=True)
+        try:
+            await query.edit_message_text(text="Please send a new text.")
+        except Exception:
+            pass
         return
-    await query.answer()
     style_name = STYLE_NAMES[style_index]
     styled_text = convert_text(user_text, style_name)
     context.user_data["selected_style"] = style_index
@@ -633,48 +879,60 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     safe_styled_text = html.escape(styled_text)
     try:
         await query.edit_message_text(
-            text=f"✨ <b>{html.escape(style_name)}</b>\\n\\n{safe_styled_text}\\n\\n🎨 ستایڵێکی تر هەڵبژێرە، یان دەقەکە کۆپی بکە.",
-            reply_markup=keyboard,
-            parse_mode="HTML"
+            text=safe_styled_text, reply_markup=keyboard, parse_mode="HTML"
         )
     except Exception as error:
         if "Message is not modified" not in str(error):
             logger.error("Message edit failed: %s", error)
 
+
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
     logger.error("Unhandled exception:", exc_info=context.error)
 
+
 # =========================================================
-# MAIN ASYNC ENGINE
+# MAIN ASYNC ENGINE (FULLY NON-BLOCKING FOR RENDER)
 # =========================================================
+
 async def main():
     init_users_db()
+
     if not BOT_TOKEN:
-        raise ValueError("BOT_TOKEN environment variable لە Render > Environment دابنێ.")
+        raise ValueError("Missing BOT_TOKEN environment variable in Render > Environment")
 
     application = ApplicationBuilder().token(BOT_TOKEN).build()
+
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("users", users_command))
     application.add_handler(CommandHandler("user", user_command))
-    application.add_handler(CallbackQueryHandler(user_profile_callback, pattern=r"^profile:\\d+$"))
+    application.add_handler(
+        CallbackQueryHandler(user_profile_callback, pattern=r"^profile:\d+$")
+    )
     application.add_handler(CallbackQueryHandler(check_join, pattern=r"^check_join$"))
-    application.add_handler(CallbackQueryHandler(button_click, pattern=r"^style:\\d+$"))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    application.add_handler(CallbackQueryHandler(button_click, pattern=r"^style:\d+$"))
+    application.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
+    )
     application.add_error_handler(error_handler)
 
     port = int(os.environ.get("PORT", 10000))
     from werkzeug.serving import run_simple
+
+    # Run Flask in background without blocking asyncio event loop.
     loop = asyncio.get_running_loop()
     loop.run_in_executor(
         None,
-        lambda: run_simple("0.0.0.0", port, app, use_reloader=False, threaded=True)
+        lambda: run_simple("0.0.0.0", port, app, use_reloader=False, threaded=True),
     )
-    logger.info("Flask server starting on port %d", port)
-    logger.info("Bot starting Telegram polling")
+
+    logger.info("Flask server up and listening on port %d", port)
+    logger.info("Bot starting Telegram Polling...")
+
     async with application:
         await application.start()
         await application.updater.start_polling(drop_pending_updates=True)
         await asyncio.Event().wait()
+
 
 if __name__ == "__main__":
     try:
