@@ -800,7 +800,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await notify_admin_new_user(context.bot, update.effective_user)
     if not await require_subscription(update, context):
         return
-    await update.message.reply_text(text=ئێستا دەقێکی ئینگلیزی بنێرەو دەست لە دوگمەی دڵخوازت بدە.")
+    await update.message.reply_text(text="Send me an English text.")
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -939,4 +939,3 @@ if __name__ == "__main__":
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
         pass
-
