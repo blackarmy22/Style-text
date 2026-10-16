@@ -347,23 +347,28 @@ def typewriter(text):
     return apply_map(text, MONOSPACE_MAP)
 
 
-# Functions for the 4 new styles
+# =========================================================
+# NEW STYLE HELPER FUNCTIONS
+# =========================================================
+
 def strikethrough(text):
     return "".join(char + "\u0336" for char in text)
 
 
-def zalgo_text(text):
+def glitch_text(text):
     return "".join(char + "\u033d" for char in text)
 
 
 CYRILLIC_MAP = {
-    "A": "Ҽ", "a": "Ҽ", "B": "Ɓ", "b": "ƀ", "C": "С", "c": "с",
-    "D": "Đ", "d": "đ", "E": "Ӗ", "e": "Ҹ", "F": "Ғ", "f": "ƒ",
-    "G": "Ҕ", "g": "ӷ", "H": "Ԝ", "i": "ɪ", "I": "І", "L": "Լ",
-    "l": "ℓ", "M": "Ɱ", "N": "Ͷ", "n": "ᴎ", "O": "Ꙭ", "o": "ꙭ",
-    "R": "Я", "r": "ɼ", "S": "Ş", "s": "ş", "T": "Ͳ", "t": "ƭ",
-    "U": "Ս", "u": "υ", "V": "Ѵ", "v": "ѵ", "W": "Ш", "w": "ш",
-    "X": "Ӿ", "x": "ӿ", "Y": "Ұ", "y": "ұ", "Z": "乙", "z": "ƶ"
+    "A": "Ҽ", "a": "ӻ", "B": "Ɓ", "b": "ƀ", "C": "Ҫ", "c": "ҫ",
+    "D": "Ꚁ", "d": "ԁ", "E": "Ӗ", "e": "ӗ", "F": "Ϝ", "f": "ϝ",
+    "G": "Ҕ", "g": "ҕ", "H": "Ӊ", "h": "ӊ", "I": "ӏ", "i": "ӏ",
+    "J": "Ј", "j": "ј", "K": "Ҝ", "k": "ҝ", "L": "Ӆ", "l": "ӆ",
+    "M": "Ӎ", "m": "ӎ", "N": "Ҥ", "n": "ҥ", "O": "Ӧ", "o": "ӧ",
+    "P": "Ҏ", "p": "ҏ", "Q": "Ԛ", "q": "ԛ", "R": "Я", "r": "я",
+    "S": "Ş", "s": "ş", "T": "Ҭ", "t": "ҭ", "U": "Ӱ", "u": "ӱ",
+    "V": "Ѵ", "v": "ѵ", "W": "Ԝ", "w": "ԝ", "X": "Ӿ", "x": "ӿ",
+    "Y": "Ӳ", "y": "ӳ", "Z": "Ӡ", "z": "ӡ",
 }
 
 def cyrillic_glitch(text):
@@ -371,18 +376,18 @@ def cyrillic_glitch(text):
 
 
 DECORATIVE_MAP = {
-    "A": "Ｅ", "a": "𝚎", "B": "𐌁", "b": "𝕓", "C": "𐌂", "c": "𝕔",
-    "D": "𐌃", "d": "𝕕", "E": "𐌄", "e": "𝚎", "F": "𐌅", "f": "𝕗",
-    "G": "𐌆", "g": "𝕘", "H": "𐌇", "h": "𝕙", "I": "𐌈", "i": "𝔦",
-    "J": "𐌉", "j": "𝕛", "K": "𐌊", "k": "𝕜", "L": "𐌋", "l": "𝕝",
-    "M": "𐌌", "m": "𝕞", "N": "𐌍", "n": "𝕟", "O": "𐌎", "o": "𝔬",
-    "P": "𐌏", "p": "𝕡", "Q": "𐌐", "q": "𝕢", "R": "𐌑", "r": "𝕣",
-    "S": "𐌒", "s": "𝕤", "T": "𐌓", "t": "𝕥", "U": "𐌔", "u": "𝔲",
-    "V": "𐌕", "v": "𝔳", "W": "𐌖", "w": "𝔴", "X": "𐌗", "x": "𝔵",
-    "Y": "𐌘", "y": "𝔶", "Z": "𐌙", "z": "𝔷"
+    "A": "Ｅ", "a": "𝚎", "B": "𐌍", "b": "𝕓", "C": "𝖢", "c": "𝕔",
+    "D": "𝒹", "d": "𝕕", "E": "𝚎", "e": "𝚎", "F": "𝔽", "f": "𝕗",
+    "G": "𝖦", "g": "𝕘", "H": "𝖧", "h": "𝕙", "I": "𝚰", "i": "𝕚",
+    "J": "𝖩", "j": "𝕛", "K": "𝖪", "k": "𝕜", "L": "𝕃", "l": "𝕝",
+    "M": "𝖬", "m": "𝕞", "N": "𝖭", "n": "𝕟", "O": "𝖮", "o": "𝕠",
+    "P": "𝖯", "p": "𝕡", "Q": "𝖰", "q": "𝕢", "R": "𝖱", "r": "𝕣",
+    "S": "𝖲", "s": "𝕤", "T": "𝚻", "t": "𝕥", "U": "𝖴", "u": "𝕦",
+    "V": "𝖵", "v": "𝕧", "W": "𝖶", "w": "𝕨", "X": "𝖷", "x": "𝕩",
+    "Y": "𝚼", "y": "𝕪", "Z": "𝖹", "z": "𝕫",
 }
 
-def decorative_arrows(text):
+def decorative_style(text):
     return apply_map(text, DECORATIVE_MAP)
 
 
@@ -484,9 +489,9 @@ STYLE_FUNCTIONS = {
     "Special": special,
     "Parenthesized": parenthesized,
     "Strikethrough": strikethrough,
-    "Zalgo": zalgo_text,
-    "Cyrillic": cyrillic_glitch,
-    "Decorative": decorative_arrows,
+    "Glitch Text": glitch_text,
+    "Cyrillic Glitch": cyrillic_glitch,
+    "Decorative": decorative_style,
     "Bold Serif Caps": bold_serif_caps,
     "Bold Serif Lower": bold_serif_lower,
     "Italic Serif Caps": italic_serif_caps,
@@ -526,7 +531,6 @@ STYLE_FUNCTIONS = {
     "Script Title": script_title,
     "Gothic Title": gothic_title,
     "Sans Title": sans_title,
-    "Double Title": double_title,
     "Mono Title": mono_title,
 }
 
