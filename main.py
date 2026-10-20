@@ -623,6 +623,10 @@ def track_user(user):
     conn = sqlite3.connect(USERS_DB, timeout=30, check_same_thread=False)
     try:
         conn.execute("PRAGMA busy_timeout = 30000")
+        existing = conn.execute(
+            "SELECT user_id FROM users WHERE user_id = ?", (user.id,)
+        ).fetchone()
+        is_new = existing is None
         conn.execute("""
             INSERT INTO users (user_id, username, first_name, last_name, first_seen, last_seen)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -633,8 +637,7 @@ def track_user(user):
                 last_seen = excluded.last_seen
         """, (user.id, user.username, user.first_name, user.last_name, now, now))
         conn.commit()
-        # لێرەدا دەگێڕینەوە True بۆ ئەوەی لە هەموو چالاکییەکدا ئاگاداری بنێردرێت
-        return True
+        return is_new
     finally:
         conn.close()
 
@@ -650,6 +653,7 @@ async def notify_admin_new_user(bot, user):
         f"📛 Username: {html.escape(username)}\n"
         f"🆔 User ID: <code>{user.id}</code>"
     )
+    # لینکی ئەکاونتی بەکارهێنەر بۆ هەمووان (بە تەنها یۆسەرنەیم نەبەستراوەتەوە، بەڵکو لە ڕێگەی IDـیەوە کار دەکات)
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("👤 View Profile", url=f"tg://user?id={user.id}")]
     ])
@@ -872,9 +876,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message:
         return
-    is_new = track_user(update.effective_user)
-    if is_new:
-        await notify_admin_new_user(context.bot, update.effective_user)
+    track_user(update.effective_user)
     if not await require_subscription(update, context):
         return
     if not update.message.text:
@@ -908,9 +910,7 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     if not query:
         return
-    is_new = track_user(query.from_user)
-    if is_new:
-        await notify_admin_new_user(context.bot, query.from_user)
+    track_user(query.from_user)
     if not await is_subscribed(context.bot, query.from_user.id):
         await query.answer(
             "❌ بۆ بەکارهێنانی بۆتەکە دەبێت سەرەتا جۆینی چەناڵ بکەیت.",
