@@ -623,10 +623,6 @@ def track_user(user):
     conn = sqlite3.connect(USERS_DB, timeout=30, check_same_thread=False)
     try:
         conn.execute("PRAGMA busy_timeout = 30000")
-        existing = conn.execute(
-            "SELECT user_id FROM users WHERE user_id = ?", (user.id,)
-        ).fetchone()
-        is_new = existing is None
         conn.execute("""
             INSERT INTO users (user_id, username, first_name, last_name, first_seen, last_seen)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -637,7 +633,8 @@ def track_user(user):
                 last_seen = excluded.last_seen
         """, (user.id, user.username, user.first_name, user.last_name, now, now))
         conn.commit()
-        return is_new
+        # لێرەدا دەگێڕینەوە True بۆ ئەوەی لە هەموو چالاکییەکدا ئاگاداری بنێردرێت
+        return True
     finally:
         conn.close()
 
