@@ -722,7 +722,7 @@ def serif_italic(text):
 
 
 # =========================================================
-# NEW CUSTOM STYLES (ستایلە نوێیەکان کە داواکردوون)
+# NEW CUSTOM STYLES (ستایلە نوێیەکان)
 # =========================================================
 
 # 1. A̷b̷c̷d̷e̷f̷g̷ (Slash Strike)
@@ -1172,7 +1172,7 @@ STYLE_FUNCTIONS = {
 }
 
 STYLE_NAMES = list(STYLE_FUNCTIONS.keys())
-ITEMS_PER_PAGE = 9  # ٩ ستایل لە هەر پەڕەیەکدا نیشان دەدرێت بۆ ئەوەی پەڕەبەپەڕە بێت
+ITEMS_PER_PAGE = 9  # ٩ ستایل لە هەر پەڕەیەکدا نیشان دەدرێت
 
 
 def convert_text(text: str, style_name: str) -> str:
@@ -1690,7 +1690,9 @@ async def main():
   )
   application.add_handler(CallbackQueryHandler(check_join, pattern=r"^check_join$"))
   application.add_handler(
-      CallbackQueryHandler(button_click, pattern=r"^(style:\d+:\d+|page:\d+:\-?\d+|noop)$")
+      CallbackQueryHandler(
+          button_click, pattern=r"^(style:\d+:\d+|page:\d+:\-?\d+|noop)$"
+      )
   )
   application.add_handler(
       MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
