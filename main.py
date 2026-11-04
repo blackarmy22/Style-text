@@ -1,4 +1,3 @@
-
 # =========================================================
 # ENGLISH STYLE FONT BOT (RENDER OPTIMIZED & ENV CHANNEL)
 # =========================================================
@@ -964,7 +963,7 @@ async def main():
         CallbackQueryHandler(user_profile_callback, pattern=r"^profile:\d+$")
     )
     application.add_handler(CallbackQueryHandler(check_join, pattern=r"^check_join$"))
-    application.add_handler(CallbackQueryHandler(button_click, pattern=r"^(style:\d+|page:\d+:\d+|noop)$"))
+    application.add_handler(CallbackQueryHandler(button_click, pattern=r"^(style:\d+:\d+|style:\d+|page:\d+:\d+|noop)$"))
     application.add_handler(
         MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
     )
@@ -994,4 +993,3 @@ if __name__ == "__main__":
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
         pass
-
