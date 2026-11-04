@@ -137,7 +137,6 @@ SCRIPT_MAP = make_math_map(
 )
 BOLD_SCRIPT_MAP = make_math_map(0x1D4D0, 0x1D4EA)
 
-# Fix special Unicode characters in Script, Fraktur, and Double Struck maps.
 SCRIPT_MAP.update({
     "B": "ℬ",
     "E": "ℰ",
@@ -172,7 +171,6 @@ for i, char in enumerate(DIGITS):
 
 
 def apply_map(text, mapping):
-  # حافظەت لە کیپیتال و سمۆڵ کرد بە بەکارهێنانی mapping.get بۆ هەر پیتێک بە جیا
   return "".join(mapping.get(char, char) for char in text)
 
 
@@ -230,7 +228,7 @@ def circled(text):
 
 
 NEGATIVE_CIRCLED_UPPER = "🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩"
-NEGATIVE_CIRCLED_LOWER = "ⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ"  # بۆ پاراستنی سمۆڵ
+NEGATIVE_CIRCLED_LOWER = "ⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ"
 
 
 def filled_circled(text):
@@ -239,16 +237,13 @@ def filled_circled(text):
     if char in UPPER:
       result.append(NEGATIVE_CIRCLED_UPPER[UPPER.index(char)])
     elif char in LOWER:
-      result.append(
-          NEGATIVE_CIRCLED_LOWER[LOWER.index(char)]
-      )  # سمۆڵ وەک خۆی دەپارێزێت
+      result.append(NEGATIVE_CIRCLED_LOWER[LOWER.index(char)])
     else:
       result.append(char)
   return "".join(result)
 
 
 SQUARED_UPPER = "🄰🄱🄲🄳🄴🄵🄶🄷🄸🄹🄺🄻🄼🄽🄾🄿🅀🅁🅂🅃🅄🅅🅆🅇🅈🅉"
-SQUARED_LOWER = "🄰🄱🄲🄳🄴🄵🄶🄷🄸🄹🄺🄻🄼🄽🄾🄿🅀🅁🅂🅃🅄🅅🅆🅇🅈🅉"
 
 
 def squares(text):
@@ -257,15 +252,13 @@ def squares(text):
     if char in UPPER:
       result.append(SQUARED_UPPER[UPPER.index(char)])
     elif char in LOWER:
-      result.append(
-          SQUARED_UPPER[LOWER.index(char)]
-      )  # بەکارهێنانی نەخشەی هاوشێوە بەبێ گۆڕینی قەبارە
+      result.append(SQUARED_UPPER[LOWER.index(char)])
     else:
       result.append(char)
   return "".join(result)
 
 
-NEGATIVE_SQUARED_UPPER = "🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🆅🆆🆇🆈🆉"
+NEGATIVE_SQUARED_UPPER = "🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🅅🆆🆇🆈🆉"
 
 
 def filled_squares(text):
@@ -373,7 +366,7 @@ TINY_MAP = {
     "D": "ᴰ",
     "E": "ᴱ",
     "F": "ᶠ",
-    "G": "",
+    "G": "ᴳ",
     "H": "ᴴ",
     "I": "ᴵ",
     "J": "ᴶ",
@@ -724,75 +717,411 @@ def mirror(text):
   return "".join(MIRROR_MAP.get(char, char) for char in text[::-1])
 
 
-def identity(text):
-  return text
-
-
-def serif(text):
-  return text
-
-
 def serif_italic(text):
   return apply_map(text, ITALIC_SERIF_MAP)
 
 
-def gothic_style(text):
-  return apply_map(text, FRAKTUR_MAP)
+# =========================================================
+# NEW CUSTOM STYLES (مستشەعری ستایلە نوێکان)
+# =========================================================
+
+# 1. A̷b̷c̷d̷e̷ف̷g̷ (Strikethrough slash overlay)
+def style_slash_strike(text):
+  return "".join(f"{c}\u0337" if c.strip() else c for c in text)
 
 
-def typewriter(text):
-  return apply_map(text, MONOSPACE_MAP)
+# 2. ᗩᗷᑕᗪEᖴG (Sans Serif Circled / Large Bubbles style equivalent)
+SANS_CIRCLED_UPPER = "🇦🇧🇨🇩🇪🇫🇬🇭🇮🇯🇰🇱🇲🇳🇴🇵🇶🇷🇸🇹🇺🇻🇼🇽🇾🇿"
+SANS_CIRCLED_LOWER = "🇦🇧🇨🇩🇪🇫🇬🇭🇮🇯🇰🇱🇲🇳🇴🇵🇶🇷🇸🇹🇺🇻🇼🇽🇾🇿"
 
 
-def alternating(text, map_a, map_b):
+def style_sans_bubbles(text):
   result = []
-  letter_index = 0
   for char in text:
-    if char.isalpha():
-      result.append(
-          map_a.get(char, char)
-          if letter_index % 2 == 0
-          else map_b.get(char, char)
-      )
-      letter_index += 1
+    if char in UPPER:
+      result.append(SANS_CIRCLED_UPPER[UPPER.index(char)])
+    elif char in LOWER:
+      result.append(SANS_CIRCLED_LOWER[LOWER.index(char)])
     else:
       result.append(char)
   return "".join(result)
 
 
-def alternating_bold(text):
-  return alternating(text, BOLD_SERIF_MAP, BOLD_ITALIC_MAP)
+# 3. Ⱥҍçժҽƒց (Quni / Comic style variant)
+QU_CUSTOM_MAP = {
+    "A": "Ⱥ",
+    "a": "Ⱥ",
+    "B": "ҍ",
+    "b": "ҍ",
+    "C": "ç",
+    "c": "ç",
+    "D": "ժ",
+    "d": "ժ",
+    "E": "ҽ",
+    "e": "ҽ",
+    "F": "ƒ",
+    "f": "ƒ",
+    "G": "ց",
+    "g": "ց",
+    "H": "Ħ",
+    "h": "հ",
+    "I": "Ӏ",
+    "i": "ɪ",
+    "J": "Ꭻ",
+    "j": "ʝ",
+    "K": "Ƙ",
+    "k": "ƙ",
+    "L": "ᒪ",
+    "l": "ℓ",
+    "M": "ℳ",
+    "m": "ɱ",
+    "N": "ℕ",
+    "n": "ղ",
+    "O": "Ꝋ",
+    "o": "ℴ",
+    "P": "℘",
+    "p": "ƥ",
+    "Q": "ⵕ",
+    "q": "զ",
+    "R": "℟",
+    "r": "ɾ",
+    "S": "Ꮪ",
+    "s": "ʂ",
+    "T": "Ͳ",
+    "t": "ƭ",
+    "U": "ℱ",
+    "u": "ʉ",
+    "V": "℣",
+    "v": "ѵ",
+    "W": "Ꮤ",
+    "w": "𝕨",
+    "X": "Ӿ",
+    "x": "ҳ",
+    "Y": "Ƴ",
+    "y": "ყ",
+    "Z": "ℤ",
+    "z": "ȥ",
+}
 
 
-def alternating_sans(text):
-  return alternating(text, SANS_MAP, SANS_BOLD_MAP)
+def style_qu_custom(text):
+  return apply_map(text, QU_CUSTOM_MAP)
 
 
-def alternating_script(text):
-  return alternating(text, SCRIPT_MAP, BOLD_SCRIPT_MAP)
+# 4. A҉b҉c҉d҉e҉f҉g҉ (Cyrillic / Combining Lightning / Corrupted style)
+def style_corrupted_fire(text):
+  return "".join(f"{c}\u0489" if c.strip() else c for c in text)
 
 
-def alternating_gothic(text):
-  return alternating(text, FRAKTUR_MAP, BOLD_FRAKTUR_MAP)
+# 5. ﾑ乃ᄃり乇ｷム (Aesthetic Japanese/Ansi style)
+ANSI_MAP = {
+    "A": "ﾑ",
+    "a": "ﾑ",
+    "B": "乃",
+    "b": "乃",
+    "C": "ᄃ",
+    "c": "ᄃ",
+    "D": "り",
+    "d": "り",
+    "E": "乇",
+    "e": "乇",
+    "F": "ｷ",
+    "f": "ｷ",
+    "G": "ム",
+    "g": "ム",
+    "H": "ዘ",
+    "h": "ዘ",
+    "I": "ٱ",
+    "i": "ٱ",
+    "J": "ﾌ",
+    "j": "ﾌ",
+    "K": "ӄ",
+    "k": "ӄ",
+    "L": "ረ",
+    "l": "ረ",
+    "M": "Ꮇ",
+    "m": "Ꮇ",
+    "N": "Ռ",
+    "n": "Ռ",
+    "O": "Ꝋ",
+    "o": "Ꝋ",
+    "P": "℘",
+    "p": "℘",
+    "Q": "զ",
+    "q": "զ",
+    "R": "R",
+    "r": "ʀ",
+    "S": "Տ",
+    "s": "Տ",
+    "T": "ፕ",
+    "t": "ፕ",
+    "U": "ሀ",
+    "u": "ሀ",
+    "V": "ሀ",
+    "v": "ሀ",
+    "W": "ሠ",
+    "w": "ሠ",
+    "X": "Ӿ",
+    "x": "Ӿ",
+    "Y": "ሃ",
+    "y": "ሃ",
+    "Z": "ℤ",
+    "z": "ℤ",
+}
 
 
-def alternating_double(text):
-  return alternating(text, DOUBLE_STRUCK_MAP, BOLD_SERIF_MAP)
+def style_ansi(text):
+  return apply_map(text, ANSI_MAP)
 
 
-def alternating_mono(text):
-  return alternating(text, MONOSPACE_MAP, SANS_MAP)
+# 6. 卂乃匚ᗪ乇千Ꮆ (Wide / Chuan style)
+WIDE_MAP = {
+    "A": "卂",
+    "a": "卂",
+    "B": "乃",
+    "b": "乃",
+    "C": "匚",
+    "c": "匚",
+    "D": "ᗪ",
+    "d": "ᗪ",
+    "E": "乇",
+    "e": "乇",
+    "F": "千",
+    "f": "千",
+    "G": "Ꮆ",
+    "g": "Ꮆ",
+    "H": "卄",
+    "h": "卄",
+    "I": "丨",
+    "i": "丨",
+    "J": "ﾌ",
+    "j": "ﾌ",
+    "K": "Ҝ",
+    "k": "Ҝ",
+    "L": "ㄥ",
+    "l": "ㄥ",
+    "M": "爪",
+    "m": "爪",
+    "N": "ℕ",
+    "n": "ℕ",
+    "O": "ㄖ",
+    "o": "ㄖ",
+    "P": "尸",
+    "p": "尸",
+    "Q": "Ɋ",
+    "q": "Ɋ",
+    "R": "尺",
+    "r": "尺",
+    "S": "丂",
+    "s": "丂",
+    "T": "ㄒ",
+    "t": "ㄒ",
+    "U": "ㄩ",
+    "u": "ㄩ",
+    "V": "ᐯ",
+    "v": "ᐯ",
+    "W": "山",
+    "w": "山",
+    "X": " механиз",
+    "x": "乂",
+    "Y": "ㄚ",
+    "y": "ㄚ",
+    "Z": "乙",
+    "z": "乙",
+}
 
 
-def alternating_fullwidth(text):
-  return alternating(text, FULLWIDTH_MAP, BOLD_SERIF_MAP)
+def style_wide(text):
+  return apply_map(text, WIDE_MAP)
 
 
-def alternating_italic(text):
-  return alternating(text, ITALIC_SERIF_MAP, BOLD_ITALIC_MAP)
+# 7. ꪖ᥇ᥴᦔꫀᠻᧁ (Cursive / Curly aesthetic)
+CURSIVE_MAP = {
+    "A": "ꪖ",
+    "a": "ꪖ",
+    "B": "᥇",
+    "b": "᥇",
+    "C": "ᥴ",
+    "c": "ᥴ",
+    "D": "ᦔ",
+    "d": "ᦔ",
+    "E": "ꫀ",
+    "e": "ꫀ",
+    "F": "ᠻ",
+    "f": "ᠻ",
+    "G": "ᧁ",
+    "g": "ᧁ",
+    "H": "ꫝ",
+    "h": "ꫝ",
+    "I": "ỉ",
+    "i": "ỉ",
+    "J": "𝕛",
+    "j": "𝕛",
+    "K": "𝕜",
+    "k": "𝕜",
+    "L": "ꪶ",
+    "l": "ꪶ",
+    "M": "ꪑ",
+    "m": "ꪑ",
+    "N": "ꪀ",
+    "n": "ꪀ",
+    "O": "ꪮ",
+    "o": "ꪮ",
+    "P": "ᖯ",
+    "p": "ᖯ",
+    "Q": "𝕢",
+    "q": "𝕢",
+    "R": "᥅",
+    "r": "᥅",
+    "S": "ડ",
+    "s": "ડ",
+    "T": "𝕥",
+    "t": "𝕥",
+    "U": "ꪊ",
+    "u": "ꪊ",
+    "V": "᥎",
+    "v": "᥎",
+    "W": "᭙",
+    "w": "᭙",
+    "X": "᙭",
+    "x": "᙭",
+    "Y": "ꪗ",
+    "y": "ꪗ",
+    "Z": "𝕫",
+    "z": "𝕫",
+}
 
 
-# لێرەدا ستایلە دووبارەکان لابردران (وەک Outline و Serifی زیادە و هتد) و تەنها سەرەکییەکان هێڵرانەوە
+def style_cursive(text):
+  return apply_map(text, CURSIVE_MAP)
+
+
+# 8. ąცƈɖɛʄɠ (Tiny Lower / Aesthetic Sans)
+TINY_LOWER_MAP = {
+    "A": "ą",
+    "a": "ą",
+    "B": "ც",
+    "b": "ც",
+    "C": "ƈ",
+    "c": "ƈ",
+    "D": "ɖ",
+    "d": "ɖ",
+    "E": "ɛ",
+    "e": "ɛ",
+    "F": "ʄ",
+    "f": "ʄ",
+    "G": "ɠ",
+    "g": "ɠ",
+    "H": "ɦ",
+    "h": "ɦ",
+    "I": "ɪ",
+    "i": "ɪ",
+    "J": "ʝ",
+    "j": "ʝ",
+    "K": "ƙ",
+    "k": "ƙ",
+    "L": "Ɩ",
+    "l": "Ɩ",
+    "M": "ɱ",
+    "m": "ɱ",
+    "N": "ղ",
+    "n": "ղ",
+    "O": "օ",
+    "o": "օ",
+    "P": "ք",
+    "p": "ք",
+    "Q": "զ",
+    "q": "զ",
+    "R": "ɾ",
+    "r": "ɾ",
+    "S": "ʂ",
+    "s": "ʂ",
+    "T": "ɬ",
+    "t": "ɬ",
+    "U": "ʊ",
+    "u": "ʊ",
+    "V": "ʋ",
+    "v": "ʋ",
+    "W": "ɯ",
+    "w": "ɯ",
+    "X": "ӿ",
+    "x": "ӿ",
+    "Y": "ყ",
+    "y": "ყ",
+    "Z": "ȥ",
+    "z": "ȥ",
+}
+
+
+def style_tiny_lower(text):
+  return apply_map(text, TINY_LOWER_MAP)
+
+
+# 9. Äß¢Ðê£g (Diacritical / Accent style)
+ACCENT_MAP = {
+    "A": "Ä",
+    "a": "ä",
+    "B": "ß",
+    "b": "b",
+    "C": "¢",
+    "c": "¢",
+    "D": "Ð",
+    "d": "đ",
+    "E": "Ê",
+    "e": "ê",
+    "F": "£",
+    "f": "£",
+    "G": "Ğ",
+    "g": "ğ",
+    "H": "Ĥ",
+    "h": "ĥ",
+    "I": "Î",
+    "i": "î",
+    "J": "Ĵ",
+    "j": "ĵ",
+    "K": "Ķ",
+    "k": "ķ",
+    "L": "Ĺ",
+    "l": "ĺ",
+    "M": "M",
+    "m": "m",
+    "N": "Ñ",
+    "n": "ñ",
+    "O": "Ö",
+    "o": "ö",
+    "P": "Þ",
+    "p": "þ",
+    "Q": "Q",
+    "q": "q",
+    "R": "Ŕ",
+    "r": "ŕ",
+    "S": "Ş",
+    "s": "ş",
+    "T": "Ť",
+    "t": "ť",
+    "U": "Û",
+    "u": "û",
+    "V": "V",
+    "v": "v",
+    "W": "Ŵ",
+    "w": "ŵ",
+    "X": "X",
+    "x": "x",
+    "Y": "Ý",
+    "y": "ý",
+    "Z": "Ź",
+    "z": "ź",
+}
+
+
+def style_accent(text):
+  return apply_map(text, ACCENT_MAP)
+
+
+# =========================================================
+# STYLE FUNCTIONS DICTIONARY
+# =========================================================
+
 STYLE_FUNCTIONS = {
     "Bold Serif": lambda x: apply_map(x, BOLD_SERIF_MAP),
     "Italic Serif": lambda x: apply_map(x, ITALIC_SERIF_MAP),
@@ -830,9 +1159,20 @@ STYLE_FUNCTIONS = {
     "Alternating Monospace": alternating_mono,
     "Alternating Fullwidth": alternating_fullwidth,
     "Alternating Italic": alternating_italic,
+    # ستایلە نوێیەکان کە داواکت کردوون:
+    "Slash Strike": style_slash_strike,
+    "Sans Bubbles": style_sans_bubbles,
+    "Quni Custom": style_qu_custom,
+    "Corrupted Fire": style_corrupted_fire,
+    "Ansi Style": style_ansi,
+    "Wide Style": style_wide,
+    "Cursive Curly": style_cursive,
+    "Tiny Lower": style_tiny_lower,
+    "Accent Style": style_accent,
 }
 
 STYLE_NAMES = list(STYLE_FUNCTIONS.keys())
+ITEMS_PER_PAGE = 9  # چەند ستایلێک لە هەر پەڕەیەکدا نیشان بدرێت
 
 
 def convert_text(text: str, style_name: str) -> str:
@@ -853,21 +1193,58 @@ def style_button_text(style_name: str) -> str:
   return preview
 
 
-def build_style_keyboard(selected_index: int = -1):
+def build_style_keyboard(page: int = 0, selected_index: int = -1):
+  total_pages = (len(STYLE_NAMES) + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE
+  page = max(0, min(page, total_pages - 1))
+
+  start_idx = page * ITEMS_PER_PAGE
+  end_idx = min(start_idx + ITEMS_PER_PAGE, len(STYLE_NAMES))
+
   buttons = []
-  for i in range(0, len(STYLE_NAMES), 3):
-    row = []
-    for index in range(i, min(i + 3, len(STYLE_NAMES))):
-      style_name = STYLE_NAMES[index]
-      button_text = style_button_text(style_name)
-      if index == selected_index:
-        button_text = "✓ " + button_text
-      row.append(
-          InlineKeyboardButton(
-              text=button_text, callback_data=f"style:{index}"
-          )
+  current_row = []
+
+  for index in range(start_idx, end_idx):
+    style_name = STYLE_NAMES[index]
+    button_text = style_button_text(style_name)
+    if index == selected_index:
+      button_text = "✓ " + button_text
+    current_row.append(
+        InlineKeyboardButton(
+            text=button_text, callback_data=f"style:{index}:{page}"
+        )
+    )
+    if len(current_row) == 3:
+      buttons.append(current_row)
+      current_row = []
+
+  if current_row:
+    buttons.append(current_row)
+
+  # دوگمەکانی هاتوچۆ (پێشتر و داهاتوو)
+  nav_row = []
+  if page > 0:
+    nav_row.append(
+        InlineKeyboardButton(
+            text="⬅️ پێشتر", callback_data=f"page:{page - 1}:{selected_index}"
+        )
+    )
+
+  nav_row.append(
+      InlineKeyboardButton(
+          text=f"📄 {page + 1}/{total_pages}", callback_data="noop"
       )
-    buttons.append(row)
+  )
+
+  if page < total_pages - 1:
+    nav_row.append(
+        InlineKeyboardButton(
+            text="داهاتوو ➡️", callback_data=f"page:{page + 1}:{selected_index}"
+        )
+    )
+
+  if nav_row:
+    buttons.append(nav_row)
+
   return InlineKeyboardMarkup(buttons)
 
 
@@ -1184,7 +1561,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return
   context.user_data["current_text"] = user_text
   context.user_data["selected_style"] = -1
-  keyboard = build_style_keyboard(selected_index=-1)
+  context.user_data["current_page"] = 0
+  keyboard = build_style_keyboard(page=0, selected_index=-1)
   safe_text = html.escape(user_text)
   sent_message = await update.message.reply_text(
       text=safe_text, reply_markup=keyboard, parse_mode="HTML"
@@ -1212,16 +1590,46 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception:
       pass
     return
-  await query.answer()
+
   data = query.data or ""
+  if data == "noop":
+    await query.answer()
+    return
+
+  # گۆڕینی پەڕەکان (Pagination)
+  if data.startswith("page:"):
+    try:
+      parts = data.split(":")
+      target_page = int(parts[1])
+      selected_index = int(parts[2])
+    except (ValueError, IndexError):
+      return
+    await query.answer()
+    context.user_data["current_page"] = target_page
+    selected_style = context.user_data.get("selected_style", -1)
+    keyboard = build_style_keyboard(
+        page=target_page, selected_index=selected_style
+    )
+    try:
+      await query.edit_message_reply_markup(reply_markup=keyboard)
+    except Exception as error:
+      if "Message is not modified" not in str(error):
+        logger.error("Pagination markup edit failed: %s", error)
+    return
+
   if not data.startswith("style:"):
     return
+
   try:
-    style_index = int(data.split(":", 1)[1])
+    parts = data.split(":")
+    style_index = int(parts[1])
+    page = int(parts[2]) if len(parts) > 2 else 0
   except (ValueError, IndexError):
     return
+
   if style_index < 0 or style_index >= len(STYLE_NAMES):
     return
+
   current_message_id = context.user_data.get("style_message_id")
   if (
       current_message_id
@@ -1230,6 +1638,7 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
   ):
     await query.answer("ئەم بەشەی ستایلە چالاک نییە.", show_alert=True)
     return
+
   user_text = context.user_data.get("current_text", "")
   if not user_text:
     try:
@@ -1237,10 +1646,13 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception:
       pass
     return
+
+  await query.answer()
   style_name = STYLE_NAMES[style_index]
   styled_text = convert_text(user_text, style_name)
   context.user_data["selected_style"] = style_index
-  keyboard = build_style_keyboard(selected_index=style_index)
+  context.user_data["current_page"] = page
+  keyboard = build_style_keyboard(page=page, selected_index=style_index)
   safe_styled_text = html.escape(styled_text)
   try:
     await query.edit_message_text(
@@ -1277,7 +1689,9 @@ async def main():
       CallbackQueryHandler(user_profile_callback, pattern=r"^profile:\d+$")
   )
   application.add_handler(CallbackQueryHandler(check_join, pattern=r"^check_join$"))
-  application.add_handler(CallbackQueryHandler(button_click, pattern=r"^style:\d+$"))
+  application.add_handler(
+      CallbackQueryHandler(button_click, pattern=r"^(style:\d+:\d+|page:\d+:\-?\d+|noop)$")
+  )
   application.add_handler(
       MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
   )
