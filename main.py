@@ -46,6 +46,7 @@ def health():
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 
+# Channel name and link are read from Environment variables.
 CHANNEL_ID = os.getenv("CHANNEL_ID", "@fontstylem").strip()
 CHANNEL_LINK = os.getenv("CHANNEL_LINK", "https://t.me/fontstylem").strip()
 
@@ -114,6 +115,7 @@ SCRIPT_MAP = make_math_map(
 )
 BOLD_SCRIPT_MAP = make_math_map(0x1D4D0, 0x1D4EA)
 
+# Fix special Unicode characters in Script, Fraktur, and Double Struck maps.
 SCRIPT_MAP.update({
     "B": "ℬ", "E": "ℰ", "F": "ℱ", "H": "ℋ", "I": "ℐ",
     "L": "ℒ", "M": "ℳ", "R": "ℛ", "e": "ℯ", "g": "ℊ", "o": "ℴ",
@@ -147,10 +149,7 @@ SMALL_CAPS_MAP = {
 
 
 def small_caps(text):
-    return "".join(
-        SMALL_CAPS_MAP.get(char, char) if char in LOWER else char
-        for char in text
-    )
+    return "".join(SMALL_CAPS_MAP.get(char.lower(), char) for char in text)
 
 
 CIRCLED_UPPER = "ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏ"
@@ -177,8 +176,8 @@ NEGATIVE_CIRCLED_UPPER = "🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜�
 
 def filled_circled(text):
     return "".join(
-        NEGATIVE_CIRCLED_UPPER[UPPER.index(char)]
-        if char in UPPER else char
+        NEGATIVE_CIRCLED_UPPER[UPPER.index(char.upper())]
+        if char.upper() in UPPER else char
         for char in text
     )
 
@@ -188,8 +187,8 @@ SQUARED_UPPER = "🄰🄱🄲🄳🄴🄵🄶🄷🄸🄹🄺🄻🄼🄽🄾�
 
 def squares(text):
     return "".join(
-        SQUARED_UPPER[UPPER.index(char)]
-        if char in UPPER else char
+        SQUARED_UPPER[UPPER.index(char.upper())]
+        if char.isalpha() and char.upper() in UPPER else char
         for char in text
     )
 
@@ -199,8 +198,8 @@ NEGATIVE_SQUARED_UPPER = "🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼�
 
 def filled_squares(text):
     return "".join(
-        NEGATIVE_SQUARED_UPPER[UPPER.index(char)]
-        if char in UPPER else char
+        NEGATIVE_SQUARED_UPPER[UPPER.index(char.upper())]
+        if char.isalpha() and char.upper() in UPPER else char
         for char in text
     )
 
@@ -215,10 +214,7 @@ PARENTHESIZED_MAP = {
 
 
 def parenthesized(text):
-    return "".join(
-        PARENTHESIZED_MAP.get(char, char) if char in LOWER else char
-        for char in text
-    )
+    return "".join(PARENTHESIZED_MAP.get(char.lower(), char) for char in text)
 
 
 TINY_MAP = {
@@ -258,7 +254,7 @@ def comic(text):
 
 
 QUNI_MAP = {
-    "A": "Ⱥ", "a": "ɑ", "B": "Ɓ", "b": "ƀ", "C": "Ƈ", "c": "ƈ",
+    "A": "Ⱥ", "a": "Ⱥ", "B": "Ɓ", "b": "ƀ", "C": "Ƈ", "c": "ƈ",
     "D": "Đ", "d": "đ", "E": "Ɇ", "e": "ɇ", "F": "Ƒ", "f": "ƒ",
     "G": "Ǥ", "g": "ǥ", "H": "Ħ", "h": "ħ", "I": "Ɨ", "i": "ɨ",
     "J": "Ɉ", "j": "ɉ", "K": "Ƙ", "k": "ƙ", "L": "Ł", "l": "ł",
@@ -351,8 +347,11 @@ def typewriter(text):
     return apply_map(text, MONOSPACE_MAP)
 
 
-# Preserve original uppercase/lowercase. Do not call .upper() or .lower().
 def case_map(text, mapping, mode):
+    if mode == "upper":
+        text = text.upper()
+    elif mode == "lower":
+        text = text.lower()
     return apply_map(text, mapping)
 
 
@@ -407,13 +406,12 @@ def alternating_fullwidth(text): return alternating(text, FULLWIDTH_MAP, BOLD_SE
 def alternating_italic(text): return alternating(text, ITALIC_SERIF_MAP, BOLD_ITALIC_MAP)
 
 
-# Title styles now preserve the exact input letter case.
-def bold_title(text): return apply_map(text, BOLD_SERIF_MAP)
-def script_title(text): return apply_map(text, SCRIPT_MAP)
-def gothic_title(text): return apply_map(text, FRAKTUR_MAP)
-def sans_title(text): return apply_map(text, SANS_MAP)
-def double_title(text): return apply_map(text, DOUBLE_STRUCK_MAP)
-def mono_title(text): return apply_map(text, MONOSPACE_MAP)
+def bold_title(text): return apply_map(text.title(), BOLD_SERIF_MAP)
+def script_title(text): return apply_map(text.title(), SCRIPT_MAP)
+def gothic_title(text): return apply_map(text.title(), FRAKTUR_MAP)
+def sans_title(text): return apply_map(text.title(), SANS_MAP)
+def double_title(text): return apply_map(text.title(), DOUBLE_STRUCK_MAP)
+def mono_title(text): return apply_map(text.title(), MONOSPACE_MAP)
 
 
 STYLE_FUNCTIONS = {
@@ -431,7 +429,10 @@ STYLE_FUNCTIONS = {
     "Sans": lambda x: apply_map(x, SANS_MAP),
     "Monospace": lambda x: apply_map(x, MONOSPACE_MAP),
     "Fullwidth": lambda x: apply_map(x, FULLWIDTH_MAP),
-    # Removed duplicate styles: Typewriter, Outline, Serif, Serif Italic.
+    "Typewriter": typewriter,
+    "Outline": lambda x: apply_map(x, DOUBLE_STRUCK_MAP),
+    "Serif": serif,
+    "Serif Italic": serif_italic,
     "Small Caps": small_caps,
     "Tiny": tiny,
     "Comic": comic,
@@ -917,6 +918,7 @@ async def main():
     port = int(os.environ.get("PORT", 10000))
     from werkzeug.serving import run_simple
 
+    # Run Flask in background without blocking asyncio event loop.
     loop = asyncio.get_running_loop()
     loop.run_in_executor(
         None,
@@ -937,3 +939,4 @@ if __name__ == "__main__":
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
         pass
+
