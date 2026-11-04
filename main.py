@@ -347,7 +347,7 @@ def typewriter(text):
     return apply_map(text, MONOSPACE_MAP)
 
 
-# لێرەدا فەنکشنەکان ڕاستکرانەوە تاوەکو بێ جیاکاری پیتی کەپیتاڵ و سمۆڵ وەک خۆیان بهێڵنەوە
+# لێرەدا فەنکشنە بنەڕەتییەکان وەک خۆیان دانراون
 def bold_serif(text): return apply_map(text, BOLD_SERIF_MAP)
 def italic_serif(text): return apply_map(text, ITALIC_SERIF_MAP)
 def bold_italic(text): return apply_map(text, BOLD_ITALIC_MAP)
@@ -362,6 +362,114 @@ def bold_gothic(text): return apply_map(text, BOLD_FRAKTUR_MAP)
 def double_struck(text): return apply_map(text, DOUBLE_STRUCK_MAP)
 def monospace(text): return apply_map(text, MONOSPACE_MAP)
 def fullwidth(text): return apply_map(text, FULLWIDTH_MAP)
+
+
+# =========================================================
+# THE 9 NEW USER CUSTOM STYLES ADDED HERE
+# =========================================================
+
+def custom_style_1(text):
+    return "".join(char + "\u0336" for char in text)
+
+SQUARE_CAPS_MAP = {
+    "A": "ᗩ", "B": "ᗷ", "C": "ᑕ", "D": "ᗪ", "E": "E", "F": "ᖴ", "G": "G",
+    "H": "ᕼ", "I": "I", "J": "ᒍ", "K": "K", "L": "ᒪ", "M": "ᗰ", "N": "ᑎ",
+    "O": "O", "P": "ᑭ", "Q": "ⵕ", "R": "ᖇ", "S": "Տ", "T": "T", "U": "ᑌ",
+    "V": "ᐯ", "W": "ᗯ", "X": "᙭", "Y": "Ƴ", "Z": "Ȝ",
+    "a": "ᵅ", "b": "ᵇ", "c": "ᶜ", "d": "ᵈ", "e": "ᵉ", "f": "ᶠ", "g": "ᵍ",
+    "h": "ʰ", "i": "ⁱ", "j": "ʲ", "k": "ᵏ", "l": "ˡ", "m": "ᵐ", "n": "ⁿ",
+    "o": "ᵒ", "p": "ᵖ", "q": "𐌵", "r": "ʳ", "s": "ˢ", "t": "ᵗ", "u": "ᵘ",
+    "v": "ᵛ", "w": "ʷ", "x": "ˣ", "y": "ʸ", "z": "ᶻ"
+}
+def custom_style_2(text):
+    return apply_map(text, SQUARE_CAPS_MAP)
+
+CUSTOM_COMIC_MAP = {
+    "A": "Ⱥ", "a": "Ⱥ", "B": "ҍ", "b": "ҍ", "C": "ç", "c": "ç",
+    "D": "ժ", "d": "ժ", "E": "ҽ", "e": "ҽ", "F": "ƒ", "f": "ƒ",
+    "G": "ց", "g": "ց", "H": "ℋ", "h": "ԋ", "I": "İ", "i": "į",
+    "J": "Ĵ", "j": "ʝ", "K": "Ҡ", "k": "ƙ", "L": "Լ", "l": "ℓ",
+    "M": "ℳ", "m": "ɱ", "N": "ղ", "n": "ղ", "O": "Ø", "o": "ø",
+    "P": "Ƥ", "p": "ƥ", "Q": "ⵕ", "q": "զ", "R": "ℛ", "r": "ɾ",
+    "S": "Տ", "s": "ʂ", "T": "Ƭ", "t": "ƭ", "U": "Մ", "u": "ʉ",
+    "V": "Ʋ", "v": "ʋ", "W": "Ɯ", "w": "ŵ", "X": "Ӿ", "x": "ӿ",
+    "Y": "Ƴ", "y": "ɏ", "Z": "ȥ", "z": "ȥ"
+}
+def custom_style_3(text):
+    return apply_map(text, CUSTOM_COMIC_MAP)
+
+def custom_style_4(text):
+    return "".join(char + "\u035d" for char in text)
+
+CYRILLIC_MIX_MAP = {
+    "A": "ﾑ", "a": "ﾑ", "B": "乃", "b": "乃", "C": "ᄃ", "c": "ᄃ",
+    "D": "り", "d": "り", "E": "乇", "e": "乇", "F": "ｷ", "f": "ｷ",
+    "G": "G", "g": "g", "H": "ん", "h": "ん", "I": "ﾉ", "i": "ﾉ",
+    "J": "ﾌ", "j": "ﾌ", "K": "Ƙ", "k": "Ƙ", "L": "ﾚ", "l": "ﾚ",
+    "M": "爪", "m": "爪", "N": "刀", "n": "刀", "O": "の", "o": "の",
+    "P": "尸", "p": "尸", "Q": "Q", "q": "q", "R": "尺", "r": "尺",
+    "S": "丂", "s": "丂", "T": "丁", "t": "丁", "U": "Ц", "u": "Ц",
+    "V": "√", "v": "√", "W": "Ш", "w": "Ш", "X": "ﾒ", "x": "ﾒ",
+    "Y": "ㄚ", "y": "ㄚ", "Z": "乙", "z": "乙"
+}
+def custom_style_5(text):
+    return apply_map(text, CYRILLIC_MIX_MAP)
+
+AESTHETIC_WIDE_MAP = {
+    "A": "卂", "a": "卂", "B": "乃", "b": "乃", "C": "匚", "c": "匚",
+    "D": "ᗪ", "d": "ᗪ", "E": "乇", "e": "乇", "F": "千", "f": "千",
+    "G": "Ꮆ", "g": "Ꮆ", "H": "ᕼ", "h": "ᕼ", "I": "丨", "i": "丨",
+    "J": "ᒍ", "j": "ᒍ", "K": "Ҝ", "k": "Ҝ", "L": "ㄥ", "l": "ㄥ",
+    "M": "爪", "m": "爪", "N": "几", "n": "几", "O": "ㄖ", "o": "ㄖ",
+    "P": "卩", "p": "卩", "Q": "Q", "q": "Q", "R": "尺", "r": "尺",
+    "S": "丂", "s": "丂", "T": "ㄒ", "t": "ㄒ", "U": "ㄩ", "u": "ㄩ",
+    "V": "ᐯ", "v": "ᐯ", "W": "山", "w": "山", "X": "乂", "x": "乂",
+    "Y": "ㄚ", "y": "ㄚ", "Z": "乙", "z": "乙"
+}
+def custom_style_6(text):
+    return apply_map(text, AESTHETIC_WIDE_MAP)
+
+BUBBLE_CURSIVE_MAP = {
+    "A": "ꪖ", "a": "ꪖ", "B": "Ⴆ", "b": "Ⴆ", "C": "ꪜ", "c": "ꪜ",
+    "D": "ԃ", "d": "ԃ", "E": "ꫀ", "e": "ꫀ", "F": "ᠻ", "f": "ᠻ",
+    "G": "ɠ", "g": "ɠ", "H": "ԗ", "h": "ԗ", "I": "ⅈ", "i": "ⅈ",
+    "J": "𝕛", "j": "𝕛", "K": "𝕜", "k": "𝕜", "L": "ꪶ", "l": "ꪶ",
+    "M": "ꪑ", "m": "ꪑ", "N": "ꪀ", "n": "ꪀ", "O": "ꪮ", "o": "ꪮ",
+    "P": "ρ", "p": "ρ", "Q": "Ɋ", "q": "Ɋ", "R": "᥅", "r": "᥅",
+    "S": "ડ", "s": "ડ", "T": "𝕥", "t": "𝕥", "U": "ꪊ", "u": "ꪊ",
+    "V": "᭙", "v": "᭙", "W": "᭙", "w": "᭙", "X": "᥊", "x": "᥊",
+    "Y": "ꪗ", "y": "ꪗ", "Z": "᭄", "z": "᭄"
+}
+def custom_style_7(text):
+    return apply_map(text, BUBBLE_CURSIVE_MAP)
+
+SMALL_LOWER_MAP = {
+    "A": "ą", "a": "ą", "B": "ც", "b": "ც", "C": "ƈ", "c": "ƈ",
+    "D": "ɖ", "d": "ɖ", "E": "ɛ", "e": "ɛ", "F": "ʄ", "f": "ʄ",
+    "G": "ɠ", "g": "ɠ", "H": "ɦ", "h": "ɦ", "I": "ɩ", "i": "ɩ",
+    "J": "ʝ", "j": "ʝ", "K": "ƙ", "k": "ƙ", "L": "Ɩ", "l": "Ɩ",
+    "M": "ɱ", "m": "ɱ", "N": "ɳ", "n": "ɳ", "O": "ɵ", "o": "ɵ",
+    "P": "ƥ", "p": "ƥ", "Q": "զ", "q": "զ", "R": "ɼ", "r": "ɼ",
+    "S": "ʂ", "s": "ʂ", "T": "ƭ", "t": "ƭ", "U": "ʉ", "u": "ʉ",
+    "V": "ʋ", "v": "ʋ", "W": "ɯ", "w": "ɯ", "X": "ҳ", "x": "ҳ",
+    "Y": "ყ", "y": "ყ", "Z": "ȥ", "z": "ȥ"
+}
+def custom_style_8(text):
+    return apply_map(text, SMALL_LOWER_MAP)
+
+ACCENT_LATIN_MAP = {
+    "A": "Ä", "a": "ä", "B": "ß", "b": "ß", "C": "¢", "c": "¢",
+    "D": "Ð", "d": "ð", "E": "Ê", "e": "ê", "F": "ℱ", "f": "ƒ",
+    "G": "Ĝ", "g": "ĝ", "H": "Ĥ", "h": "ĥ", "I": "Î", "i": "î",
+    "J": "Ĵ", "j": "ĵ", "K": "Ķ", "k": "ķ", "L": "Ł", "l": "ł",
+    "M": "Ḿ", "m": "ḿ", "N": "Ñ", "n": "ñ", "O": "Ö", "o": "ö",
+    "P": "Ƥ", "p": "ƥ", "Q": "ℚ", "q": "ℚ", "R": "Ŕ", "r": "ŕ",
+    "S": "Š", "s": "š", "T": "Ť", "t": "ť", "U": "Ü", "u": "ü",
+    "V": "Ṽ", "v": "ṽ", "W": "Ŵ", "w": "ŵ", "X": "Ẍ", "x": "ẍ",
+    "Y": "Ý", "y": "ý", "Z": "Ž", "z": "ž"
+}
+def custom_style_9(text):
+    return apply_map(text, ACCENT_LATIN_MAP)
 
 
 def alternating(text, map_a, map_b):
@@ -395,6 +503,7 @@ def mono_title(text): return apply_map(text.title(), MONOSPACE_MAP)
 
 
 STYLE_FUNCTIONS = {
+    # گشت ستایلە کۆنەکان
     "Bold Serif": bold_serif,
     "Italic Serif": italic_serif,
     "Bold Italic": bold_italic,
@@ -440,6 +549,16 @@ STYLE_FUNCTIONS = {
     "Sans Title": sans_title,
     "Double Title": double_title,
     "Mono Title": mono_title,
+    # 9 ستایلە نوێیەکەت
+    "Strikethrough": custom_style_1,
+    "Square Caps": custom_style_2,
+    "Comic Alphanumeric": custom_style_3,
+    "Glitch Text": custom_style_4,
+    "Cyrillic Mix": custom_style_5,
+    "Aesthetic Wide": custom_style_6,
+    "Bubble Cursive": custom_style_7,
+    "Small Lower": custom_style_8,
+    "Accentuated Latin": custom_style_9,
 }
 
 STYLE_NAMES = list(STYLE_FUNCTIONS.keys())
