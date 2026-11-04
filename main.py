@@ -347,41 +347,21 @@ def typewriter(text):
     return apply_map(text, MONOSPACE_MAP)
 
 
-def case_map(text, mapping, mode):
-    if mode == "upper":
-        text = text.upper()
-    elif mode == "lower":
-        text = text.lower()
-    return apply_map(text, mapping)
-
-
-def bold_serif_caps(text): return case_map(text, BOLD_SERIF_MAP, "upper")
-def bold_serif_lower(text): return case_map(text, BOLD_SERIF_MAP, "lower")
-def italic_serif_caps(text): return case_map(text, ITALIC_SERIF_MAP, "upper")
-def italic_serif_lower(text): return case_map(text, ITALIC_SERIF_MAP, "lower")
-def bold_italic_caps(text): return case_map(text, BOLD_ITALIC_MAP, "upper")
-def bold_italic_lower(text): return case_map(text, BOLD_ITALIC_MAP, "lower")
-def sans_caps(text): return case_map(text, SANS_MAP, "upper")
-def sans_lower(text): return case_map(text, SANS_MAP, "lower")
-def sans_bold_lower(text): return case_map(text, SANS_BOLD_MAP, "lower")
-def sans_italic_caps(text): return case_map(text, SANS_ITALIC_MAP, "upper")
-def sans_italic_lower(text): return case_map(text, SANS_ITALIC_MAP, "lower")
-def sans_bold_italic_caps(text): return case_map(text, SANS_BOLD_ITALIC_MAP, "upper")
-def sans_bold_italic_lower(text): return case_map(text, SANS_BOLD_ITALIC_MAP, "lower")
-def script_caps(text): return case_map(text, SCRIPT_MAP, "upper")
-def script_lower(text): return case_map(text, SCRIPT_MAP, "lower")
-def bold_script_caps(text): return case_map(text, BOLD_SCRIPT_MAP, "upper")
-def bold_script_lower(text): return case_map(text, BOLD_SCRIPT_MAP, "lower")
-def gothic_caps(text): return case_map(text, FRAKTUR_MAP, "upper")
-def gothic_lower(text): return case_map(text, FRAKTUR_MAP, "lower")
-def bold_gothic_caps(text): return case_map(text, BOLD_FRAKTUR_MAP, "upper")
-def bold_gothic_lower(text): return case_map(text, BOLD_FRAKTUR_MAP, "lower")
-def double_struck_caps(text): return case_map(text, DOUBLE_STRUCK_MAP, "upper")
-def double_struck_lower(text): return case_map(text, DOUBLE_STRUCK_MAP, "lower")
-def monospace_caps(text): return case_map(text, MONOSPACE_MAP, "upper")
-def monospace_lower(text): return case_map(text, MONOSPACE_MAP, "lower")
-def fullwidth_caps(text): return case_map(text, FULLWIDTH_MAP, "upper")
-def fullwidth_lower(text): return case_map(text, FULLWIDTH_MAP, "lower")
+# لێرەدا فەنکشنەکان ڕاستکرانەوە تاوەکو بێ جیاکاری پیتی کەپیتاڵ و سمۆڵ وەک خۆیان بهێڵنەوە
+def bold_serif(text): return apply_map(text, BOLD_SERIF_MAP)
+def italic_serif(text): return apply_map(text, ITALIC_SERIF_MAP)
+def bold_italic(text): return apply_map(text, BOLD_ITALIC_MAP)
+def sans(text): return apply_map(text, SANS_MAP)
+def sans_bold(text): return apply_map(text, SANS_BOLD_MAP)
+def sans_italic(text): return apply_map(text, SANS_ITALIC_MAP)
+def sans_bold_italic(text): return apply_map(text, SANS_BOLD_ITALIC_MAP)
+def script(text): return apply_map(text, SCRIPT_MAP)
+def bold_script(text): return apply_map(text, BOLD_SCRIPT_MAP)
+def gothic(text): return apply_map(text, FRAKTUR_MAP)
+def bold_gothic(text): return apply_map(text, BOLD_FRAKTUR_MAP)
+def double_struck(text): return apply_map(text, DOUBLE_STRUCK_MAP)
+def monospace(text): return apply_map(text, MONOSPACE_MAP)
+def fullwidth(text): return apply_map(text, FULLWIDTH_MAP)
 
 
 def alternating(text, map_a, map_b):
@@ -415,22 +395,22 @@ def mono_title(text): return apply_map(text.title(), MONOSPACE_MAP)
 
 
 STYLE_FUNCTIONS = {
-    "Bold Serif": lambda x: apply_map(x, BOLD_SERIF_MAP),
-    "Italic Serif": lambda x: apply_map(x, ITALIC_SERIF_MAP),
-    "Bold Italic": lambda x: apply_map(x, BOLD_ITALIC_MAP),
-    "Sans Bold": lambda x: apply_map(x, SANS_BOLD_MAP),
-    "Sans Italic": lambda x: apply_map(x, SANS_ITALIC_MAP),
-    "Sans Bold Italic": lambda x: apply_map(x, SANS_BOLD_ITALIC_MAP),
-    "Script": lambda x: apply_map(x, SCRIPT_MAP),
-    "Bold Script": lambda x: apply_map(x, BOLD_SCRIPT_MAP),
-    "Gothic": lambda x: apply_map(x, FRAKTUR_MAP),
-    "Gothic Bold": lambda x: apply_map(x, BOLD_FRAKTUR_MAP),
-    "Double Struck": lambda x: apply_map(x, DOUBLE_STRUCK_MAP),
-    "Sans": lambda x: apply_map(x, SANS_MAP),
-    "Monospace": lambda x: apply_map(x, MONOSPACE_MAP),
-    "Fullwidth": lambda x: apply_map(x, FULLWIDTH_MAP),
+    "Bold Serif": bold_serif,
+    "Italic Serif": italic_serif,
+    "Bold Italic": bold_italic,
+    "Sans Bold": sans_bold,
+    "Sans Italic": sans_italic,
+    "Sans Bold Italic": sans_bold_italic,
+    "Script": script,
+    "Bold Script": bold_script,
+    "Gothic": gothic,
+    "Gothic Bold": bold_gothic,
+    "Double Struck": double_struck,
+    "Sans": sans,
+    "Monospace": monospace,
+    "Fullwidth": fullwidth,
     "Typewriter": typewriter,
-    "Outline": lambda x: apply_map(x, DOUBLE_STRUCK_MAP),
+    "Outline": double_struck,
     "Serif": serif,
     "Serif Italic": serif_italic,
     "Small Caps": small_caps,
@@ -446,33 +426,6 @@ STYLE_FUNCTIONS = {
     "QUNI": quni,
     "Special": special,
     "Parenthesized": parenthesized,
-    "Bold Serif Caps": bold_serif_caps,
-    "Bold Serif Lower": bold_serif_lower,
-    "Italic Serif Caps": italic_serif_caps,
-    "Italic Serif Lower": italic_serif_lower,
-    "Bold Italic Caps": bold_italic_caps,
-    "Bold Italic Lower": bold_italic_lower,
-    "Sans Caps": sans_caps,
-    "Sans Lower": sans_lower,
-    "Sans Bold Lower": sans_bold_lower,
-    "Sans Italic Caps": sans_italic_caps,
-    "Sans Italic Lower": sans_italic_lower,
-    "Sans Bold Italic Caps": sans_bold_italic_caps,
-    "Sans Bold Italic Lower": sans_bold_italic_lower,
-    "Script Caps": script_caps,
-    "Script Lower": script_lower,
-    "Bold Script Caps": bold_script_caps,
-    "Bold Script Lower": bold_script_lower,
-    "Gothic Caps": gothic_caps,
-    "Gothic Lower": gothic_lower,
-    "Bold Gothic Caps": bold_gothic_caps,
-    "Bold Gothic Lower": bold_gothic_lower,
-    "Double Struck Caps": double_struck_caps,
-    "Double Struck Lower": double_struck_lower,
-    "Monospace Caps": monospace_caps,
-    "Monospace Lower": monospace_lower,
-    "Fullwidth Caps": fullwidth_caps,
-    "Fullwidth Lower": fullwidth_lower,
     "Alternating Bold": alternating_bold,
     "Alternating Sans": alternating_sans,
     "Alternating Script": alternating_script,
@@ -848,10 +801,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["selected_style"] = -1
     keyboard = build_style_keyboard(selected_index=-1, page=0)
     safe_text = html.escape(user_text)
-    sent_message = await update.message.reply_text(
+    await update.message.reply_text(
         text=safe_text, reply_markup=keyboard, parse_mode="HTML"
     )
-    context.user_data["style_message_id"] = sent_message.message_id
 
 
 async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -910,11 +862,6 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if style_index < 0 or style_index >= len(STYLE_NAMES):
-        return
-
-    current_message_id = context.user_data.get("style_message_id")
-    if current_message_id and query.message and query.message.message_id != current_message_id:
-        await query.answer("ئەم بەشەی ستایلە چالاک نییە.", show_alert=True)
         return
 
     user_text = context.user_data.get("current_text", "")
