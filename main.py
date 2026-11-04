@@ -46,7 +46,6 @@ def health():
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 
-# Channel name and link are read from Environment variables.
 CHANNEL_ID = os.getenv("CHANNEL_ID", "@fontstylem").strip()
 CHANNEL_LINK = os.getenv("CHANNEL_LINK", "https://t.me/fontstylem").strip()
 
@@ -115,7 +114,6 @@ SCRIPT_MAP = make_math_map(
 )
 BOLD_SCRIPT_MAP = make_math_map(0x1D4D0, 0x1D4EA)
 
-# Fix special Unicode characters in Script, Fraktur, and Double Struck maps.
 SCRIPT_MAP.update({
     "B": "ℬ", "E": "ℰ", "F": "ℱ", "H": "ℋ", "I": "ℐ",
     "L": "ℒ", "M": "ℳ", "R": "ℛ", "e": "ℯ", "g": "ℊ", "o": "ℴ",
@@ -149,7 +147,10 @@ SMALL_CAPS_MAP = {
 
 
 def small_caps(text):
-    return "".join(SMALL_CAPS_MAP.get(char.lower(), char) for char in text)
+    return "".join(
+        SMALL_CAPS_MAP.get(char, char) if char in LOWER else char
+        for char in text
+    )
 
 
 CIRCLED_UPPER = "ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏ"
@@ -176,8 +177,8 @@ NEGATIVE_CIRCLED_UPPER = "🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜�
 
 def filled_circled(text):
     return "".join(
-        NEGATIVE_CIRCLED_UPPER[UPPER.index(char.upper())]
-        if char.upper() in UPPER else char
+        NEGATIVE_CIRCLED_UPPER[UPPER.index(char)]
+        if char in UPPER else char
         for char in text
     )
 
@@ -187,19 +188,19 @@ SQUARED_UPPER = "🄰🄱🄲🄳🄴🄵🄶🄷🄸🄹🄺🄻🄼🄽🄾�
 
 def squares(text):
     return "".join(
-        SQUARED_UPPER[UPPER.index(char.upper())]
-        if char.isalpha() and char.upper() in UPPER else char
+        SQUARED_UPPER[UPPER.index(char)]
+        if char in UPPER else char
         for char in text
     )
 
 
-NEGATIVE_SQUARED_UPPER = "🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🅅🆆🆇🆈🆉"
+NEGATIVE_SQUARED_UPPER = "🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🆅🆆🆇🆈🆉"
 
 
 def filled_squares(text):
     return "".join(
-        NEGATIVE_SQUARED_UPPER[UPPER.index(char.upper())]
-        if char.isalpha() and char.upper() in UPPER else char
+        NEGATIVE_SQUARED_UPPER[UPPER.index(char)]
+        if char in UPPER else char
         for char in text
     )
 
@@ -214,7 +215,10 @@ PARENTHESIZED_MAP = {
 
 
 def parenthesized(text):
-    return "".join(PARENTHESIZED_MAP.get(char.lower(), char) for char in text)
+    return "".join(
+        PARENTHESIZED_MAP.get(char, char) if char in LOWER else char
+        for char in text
+    )
 
 
 TINY_MAP = {
@@ -254,7 +258,7 @@ def comic(text):
 
 
 QUNI_MAP = {
-    "A": "Ⱥ", "a": "Ⱥ", "B": "Ɓ", "b": "ƀ", "C": "Ƈ", "c": "ƈ",
+    "A": "Ⱥ", "a": "ɑ", "B": "Ɓ", "b": "ƀ", "C": "Ƈ", "c": "ƈ",
     "D": "Đ", "d": "đ", "E": "Ɇ", "e": "ɇ", "F": "Ƒ", "f": "ƒ",
     "G": "Ǥ", "g": "ǥ", "H": "Ħ", "h": "ħ", "I": "Ɨ", "i": "ɨ",
     "J": "Ɉ", "j": "ɉ", "K": "Ƙ", "k": "ƙ", "L": "Ł", "l": "ł",
@@ -347,57 +351,8 @@ def typewriter(text):
     return apply_map(text, MONOSPACE_MAP)
 
 
-# =========================================================
-# NEW STYLES FUNCTIONS
-# =========================================================
-
-def strikethrough(text):
-    return "".join(char + "\u0336" for char in text)
-
-
-def glitch_text(text):
-    return "".join(char + "\u0337" for char in text)
-
-
-CYRILLIC_MAP = {
-    "A": "Ҽ", "a": "Ҽ", "B": "Ɓ", "b": "ƀ", "C": "Ƈ", "c": "ƈ",
-    "D": "Đ", "d": "đ", "E": "Ӗ", "e": "ҽ", "F": "Ƒ", "f": "ƒ",
-    "G": "Ǥ", "g": "ǥ", "H": "Ħ", "h": "ħ", "I": "І", "i": "l",
-    "J": "Ɉ", "j": "ɉ", "K": "Ƙ", "k": "ƙ", "L": "Լ", "l": "l",
-    "M": "Ꮇ", "m": "ɱ", "N": "Ɲ", "n": "ղ", "O": "Օ", "o": "օ",
-    "P": "Ƥ", "p": "ƥ", "Q": "Ɋ", "q": "ɋ", "R": "Ȓ", "r": "ɍ",
-    "S": "Ş", "s": "ş", "T": "Ҭ", "t": "ŧ", "U": "Ӳ", "u": "ʉ",
-    "V": "Ʋ", "v": "ʋ", "W": "Ŵ", "w": "ŵ", "X": "Ӿ", "x": "ӿ",
-    "Y": "Ƴ", "y": "ɏ", "Z": "Ƶ", "z": "ƶ",
-}
-
-def cyrillic_glitch(text):
-    return apply_map(text, CYRILLIC_MAP)
-
-
-DECORATIVE_MAP = {
-    "A": "𐌍", "a": "𝚎", "B": "𐌁", "b": "𝕓", "C": "𐌂", "c": "𝖈",
-    "D": "𐌃", "d": "𝚍", "E": "𐌄", "e": "𝚎", "F": "𐌅", "f": "𝚏",
-    "G": "𐌆", "g": "𝚐", "H": "𐌇", "h": "𝚑", "I": "𐌉", "i": "𝚒",
-    "J": "𐌊", "j": "𝚓", "K": "𐌋", "k": "𝚔", "L": "𐌌", "l": "𝚕",
-    "M": "𐌍", "m": "𝚖", "N": "𐌎", "n": "𝚗", "O": "𐌏", "o": "𝚘",
-    "P": "𐌐", "p": "𝚙", "Q": "𐌑", "q": "𝚚", "R": "𐌒", "r": "𝚛",
-    "S": "𐌓", "s": "𝚜", "T": "𐌔", "t": "𝚝", "U": "𐌕", "u": "𝚞",
-    "V": "𐌖", "v": "𝚟", "W": "𐌗", "w": "𝚠", "X": "𐌘", "x": "𝚡",
-    "Y": "𐌙", "y": "𝚢", "Z": "𐌚", "z": "𝚠",
-}
-
-def decorative_arrows(text):
-    return apply_map(text, DECORATIVE_MAP)
-
-
-# =========================================================
-
+# Preserve original uppercase/lowercase. Do not call .upper() or .lower().
 def case_map(text, mapping, mode):
-    if mode == "upper":
-        text = text.upper()
-    elif mode == "lower":
-        text = text.lower()
     return apply_map(text, mapping)
 
 
@@ -452,11 +407,13 @@ def alternating_fullwidth(text): return alternating(text, FULLWIDTH_MAP, BOLD_SE
 def alternating_italic(text): return alternating(text, ITALIC_SERIF_MAP, BOLD_ITALIC_MAP)
 
 
-def bold_title(text): return apply_map(text.title(), BOLD_SERIF_MAP)
-def script_title(text): return apply_map(text.title(), SCRIPT_MAP)
-def gothic_title(text): return apply_map(text.title(), FRAKTUR_MAP)
-def sans_title(text): return apply_map(text.title(), SANS_MAP)
-def mono_title(text): return apply_map(text.title(), MONOSPACE_MAP)
+# Title styles now preserve the exact input letter case.
+def bold_title(text): return apply_map(text, BOLD_SERIF_MAP)
+def script_title(text): return apply_map(text, SCRIPT_MAP)
+def gothic_title(text): return apply_map(text, FRAKTUR_MAP)
+def sans_title(text): return apply_map(text, SANS_MAP)
+def double_title(text): return apply_map(text, DOUBLE_STRUCK_MAP)
+def mono_title(text): return apply_map(text, MONOSPACE_MAP)
 
 
 STYLE_FUNCTIONS = {
@@ -470,12 +427,11 @@ STYLE_FUNCTIONS = {
     "Bold Script": lambda x: apply_map(x, BOLD_SCRIPT_MAP),
     "Gothic": lambda x: apply_map(x, FRAKTUR_MAP),
     "Gothic Bold": lambda x: apply_map(x, BOLD_FRAKTUR_MAP),
+    "Double Struck": lambda x: apply_map(x, DOUBLE_STRUCK_MAP),
     "Sans": lambda x: apply_map(x, SANS_MAP),
     "Monospace": lambda x: apply_map(x, MONOSPACE_MAP),
     "Fullwidth": lambda x: apply_map(x, FULLWIDTH_MAP),
-    "Typewriter": typewriter,
-    "Serif": serif,
-    "Serif Italic": serif_italic,
+    # Removed duplicate styles: Typewriter, Outline, Serif, Serif Italic.
     "Small Caps": small_caps,
     "Tiny": tiny,
     "Comic": comic,
@@ -489,10 +445,6 @@ STYLE_FUNCTIONS = {
     "QUNI": quni,
     "Special": special,
     "Parenthesized": parenthesized,
-    "Strikethrough": strikethrough,
-    "Glitch Text": glitch_text,
-    "Cyrillic Glitch": cyrillic_glitch,
-    "Decorative Arrows": decorative_arrows,
     "Bold Serif Caps": bold_serif_caps,
     "Bold Serif Lower": bold_serif_lower,
     "Italic Serif Caps": italic_serif_caps,
@@ -532,6 +484,7 @@ STYLE_FUNCTIONS = {
     "Script Title": script_title,
     "Gothic Title": gothic_title,
     "Sans Title": sans_title,
+    "Double Title": double_title,
     "Mono Title": mono_title,
 }
 
@@ -556,40 +509,17 @@ def style_button_text(style_name: str) -> str:
     return preview
 
 
-def build_style_keyboard(page: int = 0, selected_index: int = -1):
-    items_per_page = 21  # 7 ڕیز لە هەر پەڕەیەکدا (٧ * ٣ = ٢١ دوگمە لە هەر پەڕەیەک)
-    total_items = len(STYLE_NAMES)
-    total_pages = (total_items + items_per_page - 1) // items_per_page
-    
-    start_index = page * items_per_page
-    end_index = min(start_index + items_per_page, total_items)
-    
+def build_style_keyboard(selected_index: int = -1):
     buttons = []
-    page_items = list(range(start_index, end_index))
-    
-    for i in range(0, len(page_items), 3):
+    for i in range(0, len(STYLE_NAMES), 3):
         row = []
-        for index in page_items[i:i+3]:
+        for index in range(i, min(i + 3, len(STYLE_NAMES))):
             style_name = STYLE_NAMES[index]
             button_text = style_button_text(style_name)
             if index == selected_index:
                 button_text = "✓ " + button_text
-            row.append(InlineKeyboardButton(text=button_text, callback_data=f"style:{index}:{page}"))
+            row.append(InlineKeyboardButton(text=button_text, callback_data=f"style:{index}"))
         buttons.append(row)
-    
-    # دروستکردنی دوگمەکانی گەڕان (پەڕەی پێشتر و پەڕەی دواتر)
-    nav_buttons = []
-    if page > 0:
-        nav_buttons.append(InlineKeyboardButton(text="⬅️ پشتر", callback_data=f"page:{page - 1}"))
-    
-    nav_buttons.append(InlineKeyboardButton(text=f"📄 {page + 1} / {total_pages}", callback_data="noop"))
-    
-    if page < total_pages - 1:
-        nav_buttons.append(InlineKeyboardButton(text="دواتر ➡️", callback_data=f"page:{page + 1}"))
-        
-    if nav_buttons:
-        buttons.append(nav_buttons)
-        
     return InlineKeyboardMarkup(buttons)
 
 
@@ -653,7 +583,6 @@ async def notify_admin_new_user(bot, user):
         f"📛 Username: {html.escape(username)}\n"
         f"🆔 User ID: <code>{user.id}</code>"
     )
-    # لینکی ئەکاونتی بەکارهێنەر بۆ هەمووان (بە تەنها یۆسەرنەیم نەبەستراوەتەوە، بەڵکو لە ڕێگەی IDـیەوە کار دەکات)
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("👤 View Profile", url=f"tg://user?id={user.id}")]
     ])
@@ -876,7 +805,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message:
         return
-    track_user(update.effective_user)
+    is_new = track_user(update.effective_user)
+    if is_new:
+        await notify_admin_new_user(context.bot, update.effective_user)
     if not await require_subscription(update, context):
         return
     if not update.message.text:
@@ -891,15 +822,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     context.user_data["current_text"] = user_text
     context.user_data["selected_style"] = -1
-    context.user_data["current_page"] = 0
-    
-    keyboard = build_style_keyboard(page=0, selected_index=-1)
-    
-    # بەکارهێنانی ستایڵی یەکەم وەک پێشوەختە بۆ نیشدانی نامەکە بە جوانکاری
-    first_style_name = STYLE_NAMES[0]
-    initial_styled_text = convert_text(user_text, first_style_name)
-    
-    safe_text = html.escape(initial_styled_text)
+    keyboard = build_style_keyboard(selected_index=-1)
+    safe_text = html.escape(user_text)
     sent_message = await update.message.reply_text(
         text=safe_text, reply_markup=keyboard, parse_mode="HTML"
     )
@@ -910,7 +834,9 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     if not query:
         return
-    track_user(query.from_user)
+    is_new = track_user(query.from_user)
+    if is_new:
+        await notify_admin_new_user(context.bot, query.from_user)
     if not await is_subscribed(context.bot, query.from_user.id):
         await query.answer(
             "❌ بۆ بەکارهێنانی بۆتەکە دەبێت سەرەتا جۆینی چەناڵ بکەیت.",
@@ -924,44 +850,20 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception:
             pass
         return
-
+    await query.answer()
     data = query.data or ""
-    
-    # چارەسەرکردنی دوگمەی گەڕانی پەڕەکان (Pagination)
-    if data.startswith("page:"):
-        try:
-            new_page = int(data.split(":", 1)[1])
-            context.user_data["current_page"] = new_page
-            selected_style = context.user_data.get("selected_style", -1)
-            keyboard = build_style_keyboard(page=new_page, selected_index=selected_style)
-            await query.answer()
-            await query.edit_message_reply_markup(reply_markup=keyboard)
-        except Exception:
-            await query.answer()
-        return
-
-    if data == "noop":
-        await query.answer()
-        return
-
     if not data.startswith("style:"):
         return
-        
     try:
-        parts = data.split(":")
-        style_index = int(parts[1])
-        page = int(parts[2]) if len(parts) > 2 else 0
+        style_index = int(data.split(":", 1)[1])
     except (ValueError, IndexError):
         return
-        
     if style_index < 0 or style_index >= len(STYLE_NAMES):
         return
-        
     current_message_id = context.user_data.get("style_message_id")
     if current_message_id and query.message and query.message.message_id != current_message_id:
         await query.answer("ئەم بەشەی ستایلە چالاک نییە.", show_alert=True)
         return
-        
     user_text = context.user_data.get("current_text", "")
     if not user_text:
         try:
@@ -969,16 +871,11 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception:
             pass
         return
-        
     style_name = STYLE_NAMES[style_index]
     styled_text = convert_text(user_text, style_name)
     context.user_data["selected_style"] = style_index
-    context.user_data["current_page"] = page
-    
-    keyboard = build_style_keyboard(page=page, selected_index=style_index)
+    keyboard = build_style_keyboard(selected_index=style_index)
     safe_styled_text = html.escape(styled_text)
-    
-    await query.answer()
     try:
         await query.edit_message_text(
             text=safe_styled_text, reply_markup=keyboard, parse_mode="HTML"
@@ -1011,7 +908,7 @@ async def main():
         CallbackQueryHandler(user_profile_callback, pattern=r"^profile:\d+$")
     )
     application.add_handler(CallbackQueryHandler(check_join, pattern=r"^check_join$"))
-    application.add_handler(CallbackQueryHandler(button_click, pattern=r"^(style:|page:|noop)"))
+    application.add_handler(CallbackQueryHandler(button_click, pattern=r"^style:\d+$"))
     application.add_handler(
         MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
     )
@@ -1020,7 +917,6 @@ async def main():
     port = int(os.environ.get("PORT", 10000))
     from werkzeug.serving import run_simple
 
-    # Run Flask in background without blocking asyncio event loop.
     loop = asyncio.get_running_loop()
     loop.run_in_executor(
         None,
