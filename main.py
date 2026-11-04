@@ -722,15 +722,15 @@ def serif_italic(text):
 
 
 # =========================================================
-# NEW CUSTOM STYLES (مستشەعری ستایلە نوێکان)
+# NEW CUSTOM STYLES (ستایلە نوێیەکان کە داواکردوون)
 # =========================================================
 
-# 1. A̷b̷c̷d̷e̷ف̷g̷ (Strikethrough slash overlay)
+# 1. A̷b̷c̷d̷e̷f̷g̷ (Slash Strike)
 def style_slash_strike(text):
   return "".join(f"{c}\u0337" if c.strip() else c for c in text)
 
 
-# 2. ᗩᗷᑕᗪEᖴG (Sans Serif Circled / Large Bubbles style equivalent)
+# 2. ᗩᗷᑕᗪEᖴG (Sans Bubbles)
 SANS_CIRCLED_UPPER = "🇦🇧🇨🇩🇪🇫🇬🇭🇮🇯🇰🇱🇲🇳🇴🇵🇶🇷🇸🇹🇺🇻🇼🇽🇾🇿"
 SANS_CIRCLED_LOWER = "🇦🇧🇨🇩🇪🇫🇬🇭🇮🇯🇰🇱🇲🇳🇴🇵🇶🇷🇸🇹🇺🇻🇼🇽🇾🇿"
 
@@ -747,7 +747,7 @@ def style_sans_bubbles(text):
   return "".join(result)
 
 
-# 3. Ⱥҍçժҽƒց (Quni / Comic style variant)
+# 3. Ⱥҍçժҽƒց (Quni Custom Variant)
 QU_CUSTOM_MAP = {
     "A": "Ⱥ",
     "a": "Ⱥ",
@@ -808,12 +808,12 @@ def style_qu_custom(text):
   return apply_map(text, QU_CUSTOM_MAP)
 
 
-# 4. A҉b҉c҉d҉e҉f҉g҉ (Cyrillic / Combining Lightning / Corrupted style)
+# 4. A҉b҉c҉d҉e҉f҉g҉ (Corrupted Fire)
 def style_corrupted_fire(text):
   return "".join(f"{c}\u0489" if c.strip() else c for c in text)
 
 
-# 5. ﾑ乃ᄃり乇ｷム (Aesthetic Japanese/Ansi style)
+# 5. ﾑ乃ᄃり乇ｷム (Ansi Style)
 ANSI_MAP = {
     "A": "ﾑ",
     "a": "ﾑ",
@@ -874,7 +874,7 @@ def style_ansi(text):
   return apply_map(text, ANSI_MAP)
 
 
-# 6. 卂乃匚ᗪ乇千Ꮆ (Wide / Chuan style)
+# 6. 卂乃匚ᗪ乇千Ꮆ (Wide Style)
 WIDE_MAP = {
     "A": "卂",
     "a": "卂",
@@ -922,7 +922,7 @@ WIDE_MAP = {
     "v": "ᐯ",
     "W": "山",
     "w": "山",
-    "X": " механиз",
+    "X": "乂",
     "x": "乂",
     "Y": "ㄚ",
     "y": "ㄚ",
@@ -935,7 +935,7 @@ def style_wide(text):
   return apply_map(text, WIDE_MAP)
 
 
-# 7. ꪖ᥇ᥴᦔꫀᠻᧁ (Cursive / Curly aesthetic)
+# 7. ꪖ᥇ᥴᦔꫀᠻᧁ (Cursive Curly)
 CURSIVE_MAP = {
     "A": "ꪖ",
     "a": "ꪖ",
@@ -996,7 +996,7 @@ def style_cursive(text):
   return apply_map(text, CURSIVE_MAP)
 
 
-# 8. ąცƈɖɛʄɠ (Tiny Lower / Aesthetic Sans)
+# 8. ąცƈɖɛʄɠ (Tiny Lower)
 TINY_LOWER_MAP = {
     "A": "ą",
     "a": "ą",
@@ -1057,7 +1057,7 @@ def style_tiny_lower(text):
   return apply_map(text, TINY_LOWER_MAP)
 
 
-# 9. Äß¢Ðê£g (Diacritical / Accent style)
+# 9. Äß¢Ðê£g (Accent Style)
 ACCENT_MAP = {
     "A": "Ä",
     "a": "ä",
@@ -1159,7 +1159,7 @@ STYLE_FUNCTIONS = {
     "Alternating Monospace": alternating_mono,
     "Alternating Fullwidth": alternating_fullwidth,
     "Alternating Italic": alternating_italic,
-    # ستایلە نوێیەکان کە داواکت کردوون:
+    # ستایلە نوێیەکان بە تەواوی لێرەدا قایمکراون:
     "Slash Strike": style_slash_strike,
     "Sans Bubbles": style_sans_bubbles,
     "Quni Custom": style_qu_custom,
@@ -1172,7 +1172,7 @@ STYLE_FUNCTIONS = {
 }
 
 STYLE_NAMES = list(STYLE_FUNCTIONS.keys())
-ITEMS_PER_PAGE = 9  # چەند ستایلێک لە هەر پەڕەیەکدا نیشان بدرێت
+ITEMS_PER_PAGE = 9  # ٩ ستایل لە هەر پەڕەیەکدا نیشان دەدرێت بۆ ئەوەی پەڕەبەپەڕە بێت
 
 
 def convert_text(text: str, style_name: str) -> str:
@@ -1220,7 +1220,7 @@ def build_style_keyboard(page: int = 0, selected_index: int = -1):
   if current_row:
     buttons.append(current_row)
 
-  # دوگمەکانی هاتوچۆ (پێشتر و داهاتوو)
+  # دوگمەکانی هاتوچۆ (پێشتر و داهاتوو) بۆ سیستەمی پەڕەبەپەڕە
   nav_row = []
   if page > 0:
     nav_row.append(
@@ -1596,7 +1596,7 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     return
 
-  # گۆڕینی پەڕەکان (Pagination)
+  # بەڕێوەبردنی گۆڕینی پەڕەکان (Pagination Handler)
   if data.startswith("page:"):
     try:
       parts = data.split(":")
