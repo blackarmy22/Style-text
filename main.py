@@ -571,7 +571,8 @@ async def main():
     application.add_handler(CommandHandler('user', user_command))
     application.add_handler(CallbackQueryHandler(user_profile_callback, pattern=r'^profile:\d+$'))
     application.add_handler(CallbackQueryHandler(check_join, pattern=r'^check_join$'))
-    application.add_handler(CallbackQueryHandler(button_click, pattern=r'^(style:\d+:\d+|style:\d+|page:\d+:\d+|noop)$'))
+    
+application.add_handler(CallbackQueryHandler(button_click,pattern=r'^(style:\d+:\d+|style:\d+|page:\d+:-?\d+|noop)$'))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_error_handler(error_handler)
     port = int(os.environ.get('PORT', 10000))
