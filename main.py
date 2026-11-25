@@ -238,9 +238,10 @@ def style_button_text(style_name: str) -> str:
     return preview
 
 def build_style_keyboard(selected_index: int = -1, page: int = 0):
-    ITEMS_PER_PAGE = 15
     total_styles = len(STYLE_NAMES)
-    total_pages = (total_styles + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE
+    MAX_PER_PAGE = 15
+    total_pages = (total_styles + MAX_PER_PAGE - 1) // MAX_PER_PAGE
+    ITEMS_PER_PAGE = (total_styles + total_pages - 1) // total_pages
     page = max(0, min(page, total_pages - 1))
     start_idx = page * ITEMS_PER_PAGE
     end_idx = min(start_idx + ITEMS_PER_PAGE, total_styles)
@@ -571,8 +572,7 @@ async def main():
     application.add_handler(CommandHandler('user', user_command))
     application.add_handler(CallbackQueryHandler(user_profile_callback, pattern=r'^profile:\d+$'))
     application.add_handler(CallbackQueryHandler(check_join, pattern=r'^check_join$'))
-    
-application.add_handler(CallbackQueryHandler(button_click,pattern=r'^(style:\d+:\d+|style:\d+|page:\d+:-?\d+|noop)$'))
+    application.add_handler(CallbackQueryHandler(button_click, pattern=r'^(style:\d+:\d+|style:\d+|page:\d+:-?\d+|noop)$'))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_error_handler(error_handler)
     port = int(os.environ.get('PORT', 10000))
